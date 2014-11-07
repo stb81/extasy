@@ -104,7 +104,7 @@ void Widget::handle_event(SDL_Event& event)
 {
 	switch(event.type) {
 	case SDL_MOUSEMOTION:
-		if (flags&MODAL) {
+		if ((flags&MODAL) && parent->is_child_in_front(this)) {
 			flags|=HAS_FOCUS;
 			event.motion.state|=SDL_FOCUS_CLAIMED;
 		}
@@ -290,6 +290,16 @@ void Group::bring_to_front(Widget* w)
 bool Group::is_child_in_front(const Widget* w) const
 {
 	return children[0]==w;
+}
+
+int Group::get_largest_child_layer() const
+{
+	int largest=0;
+	
+	for (auto child: children)
+		largest=std::max(largest, child->layer);
+		
+	return largest;
 }
 
 

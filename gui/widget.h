@@ -152,6 +152,8 @@ public:
 	virtual void bring_to_front(Widget*);
 	virtual bool is_child_in_front(const Widget* w) const;
 	
+	int get_largest_child_layer() const;
+	
 protected:
 	// special variant for subwidgets which are not to be automatically deleted recursively
 	void add(Widget&);

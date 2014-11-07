@@ -77,25 +77,27 @@ void Window::draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	if (flags&MODAL) {
-		glUseProgram(0);
-		
-		glEnable(GL_BLEND);
+		if (parent->is_child_in_front(this)) {
+			glUseProgram(0);
+			
+			glEnable(GL_BLEND);
 
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		
-		glBegin(GL_QUADS);
-		glColor4f(0, 0, 0, 0.5f);
-		glVertex2i(-1, -1);
-		glVertex2i( 1, -1);
-		glVertex2i( 1,  1);
-		glVertex2i(-1,  1);
-		glEnd();
-		
-		glPopMatrix();
-		
-		glDisable(GL_BLEND);
+			glMatrixMode(GL_PROJECTION);
+			glPushMatrix();
+			glLoadIdentity();
+			
+			glBegin(GL_QUADS);
+			glColor4f(0, 0, 0, 0.5f);
+			glVertex2i(-1, -1);
+			glVertex2i( 1, -1);
+			glVertex2i( 1,  1);
+			glVertex2i(-1,  1);
+			glEnd();
+			
+			glPopMatrix();
+			
+			glDisable(GL_BLEND);
+		}
 	}
 	else {
 		// render drop shadow
@@ -199,8 +201,9 @@ void Window::show(MainWindow* mainwnd)
 {
 	set_origin((mainwnd->get_width()-get_width())/2, (mainwnd->get_height()-get_height())/2);
 	
+	layer=mainwnd->get_largest_child_layer() + 1;
+	
 	mainwnd->add(this);
-	mainwnd->bring_to_front(this);
 }
 
 
