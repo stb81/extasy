@@ -1,0 +1,97 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/customsynth.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+#include "customsynthcolor.h"
+
+using namespace GUI;
+using Synth::Instrument;
+
+#include "formantedit.h"
+
+
+namespace Synth {
+
+form CustomSynth::Editor extends Window() extends InstrumentEditor<CustomSynth, CustomSynth::Editor>(CustomSynth* cs) {
+	set title="Custom Synth Editor";
+	
+	vbox {
+		element TextEdit {
+			size: 1024, 384;
+			name: srcedit;
+			
+			set colorizer=new CustomSynthColorizer(instrument);
+			set text=instrument->get_source();
+		}
+		
+		element Label {
+			size: 512, 24;
+			name: errormsg;
+		}
+
+		hbox {
+			element Button {
+				size: 96, 24;
+				
+				set label="Compile (F5)";
+				set hotkey=SDLK_F5;
+				
+				on clicked() {
+					instrument->set_source(srcedit.get_text());
+					instrument->compile();
+					
+					errormsg.set_text(instrument->compile_error_msg.c_str());
+					srcedit.set_error_highlight(instrument->compile_error_location.begin, instrument->compile_error_location.end);
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Revert";
+				
+				on clicked() {
+					srcedit.set_text(instrument->get_source());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Formants";
+				
+				on clicked() {
+					auto wnd=new FormantEditor(instrument);
+					auto root=get_root_window();
+					root->add(wnd);
+					root->bring_to_front(wnd);					
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}

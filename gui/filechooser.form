@@ -1,0 +1,123 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include "filechooser.h"
+#include "gui.h"
+
+namespace GUI {
+
+form FileChooserDialog extends Dialog() extends FileChooser() {
+	init {
+		scan_directory();
+		filelistbox.set_entry_count(files.size());
+	}
+	
+	vbox {
+		hbox {
+			element Label {
+				size: 192, 16;
+				valign: center;
+				name: curdirlabel;
+				
+				set text=directory.c_str();
+			}
+			
+			element Button {
+				size: 32, 24;
+				
+				set label="Up";
+				
+				on clicked() {
+					if (size_t lastslash=directory.rfind('/'))
+						directory.erase(lastslash);
+					
+					scan_directory();
+					filelistbox.set_entry_count(files.size());
+					curdirlabel.set_text(directory.c_str());
+				}
+			}
+		}
+		
+		element ListBox {
+			size: 0, 256;
+			halign: expand;
+			name: filelistbox;
+			
+			column_model(const FileChooserDialog& fc=*this, ListBox& listbox=@) [128] {
+				draw(x, y, row, focus) {
+					float c=focus ? 1.0f : 0.6f;
+					if (fc.files[row].type<0) c=0.8f;
+					textprintf(x, y, c, c, c, fc.files[row].name.c_str());
+				}
+				
+				method accept_edit(LineEdit* ed, int row) {
+					// Foo
+				}
+			}
+			
+			on double_clicked() {
+				File& file=files[filelistbox.get_selection()];
+				
+				if (file.type>=0)
+					filename.set_text(file.name.c_str());
+				else {
+					directory+='/';
+					directory+=file.name;
+					
+					scan_directory();
+					filelistbox.set_entry_count(files.size());
+					curdirlabel.set_text(directory.c_str());
+				}
+			}
+		}
+		
+		element LineEdit {
+			size: 0, 24;
+			halign: expand;
+			name: filename;
+		}
+	
+		hbox {
+			element Button {
+				size: 128, 24;
+				name: openbut;
+				
+				on clicked=>dismiss(int result=0);
+			}
+			
+			element Button {
+				size: 128, 24;
+				
+				set label="Cancel";
+				
+				on clicked=>dismiss(int result=1);
+			}
+		}
+	}
+	
+	factory create_save_dialog(const char* title) {
+		FileChooserDialog* dlg=new FileChooserDialog;
+		dlg->set_title(title);
+		dlg->openbut.set_label("Save");
+		return dlg;
+	}
+	
+	method get_filename()->std::string {
+		return directory+"/"+filename.get_text();
+	}
+}
+
+}

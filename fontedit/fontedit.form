@@ -1,0 +1,145 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <gui/gui.h>
+#include <gui/filechooser.form.h>
+#include "fontedit.h"
+
+using namespace GUI;
+
+form FontEditMainWnd extends MainWindow() extends FontEditBase() {
+	size: 1680, 1050;
+	
+	free {
+		element FontMatrix {
+			size: 256, 256;
+			pos: 32, 32;
+			name: fontmatrix;
+			
+			on glyph_selected(int g) {
+				selected_glyph=g;
+				
+				glyphmatrix.set_glyph(g);
+				glyphwidth.set_value(default_font->get_glyph_width(g));
+				glyphkern.set_value(default_font->get_glyph_kern(g));
+			}
+		}
+		
+		element GlyphMatrix {
+			size: 512, 512;
+			pos: 32, 320;
+			name: glyphmatrix;
+			
+			set font=default_font;
+			set glyph='A';
+			
+		}
+		
+		element LineEdit {
+			size: 512, 24;
+			pos: 32, 864;
+			
+			set text="The quick brown fox jumps over the lazy dog!";
+		}
+		
+		element SpinBox {
+			size: 96, 24;
+			pos: 640, 320;
+			name: glyphwidth;
+			
+			set range=1, 16;
+			
+			on value_changed(int w) {
+				default_font->set_glyph_width(selected_glyph, w);
+			}
+		}
+		
+		element SpinBox {
+			size: 96, 24;
+			pos: 640, 352;
+			name: glyphkern;
+			
+			set range=0, 16;
+			
+			on value_changed(int k) {
+				default_font->set_glyph_kern(selected_glyph, k);
+			}
+		}
+		
+		element Button {
+			size: 96, 24;
+			pos: 640, 384;
+			
+			set label="Shift Left";
+			
+			on clicked=>shift_left();
+		}
+	
+		element Button {
+			size: 96, 24;
+			pos: 640, 416;
+			
+			set label="Shift Right";
+			
+			on clicked=>shift_right();
+		}
+	
+		element Button {
+			size: 128, 24;
+			pos: 1024, 32;
+			
+			set label="Load";
+			
+			on clicked() {
+				FileChooserDialog dlg;
+				if (dlg.run(this)==0) {
+					delete default_font;
+					
+					default_font=Font::load_from_file(dlg.get_filename().c_str());
+					
+					glyphmatrix.set_font(default_font);
+				}
+			}
+		}
+		
+		element Button {
+			size: 128, 24;
+			pos: 1024, 64;
+			
+			set label="Save";
+			
+			on clicked() {
+				FileChooserDialog dlg;
+				if (dlg.run(this)==0) {
+					default_font->save_to_file(dlg.get_filename().c_str());
+				}
+			}
+		}
+		
+		element Button {
+			size: 128, 24;
+			pos: 1024, 96;
+			
+			set label="Quit";
+			
+			on clicked() {
+				SDL_Event ev;
+				ev.type=SDL_QUIT;
+				SDL_PushEvent(&ev);
+			}
+		}
+	}
+}

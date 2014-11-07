@@ -1,0 +1,77 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+
+using namespace GUI;
+
+namespace Synth {
+
+form ExcitationModelInstrument::Editor extends Dialog() extends Controller<ExcitationModelInstrument>(ExcitationModelInstrument* instr) {
+	set title="Edit Excitation";
+
+	vbox {
+		hbox {
+			element Knob {
+				size: 32, 64;
+
+				set label="Discrete";
+				set range=0.0f, 1.0f;
+				
+				bind: model->discrete_excitation;
+			}
+			
+			element Knob {
+				size: 32, 64;
+				
+				set label="Cont.";
+				set range=0.0f, 1.0f;
+				
+				bind: model->continuous_excitation;
+			}
+
+			element Knob {
+				size: 32, 64;
+				
+				set label="Decay";
+				set range=0.01f, 100.0f, Knob::LOGARITHMIC;
+				
+				bind: model->decay_rate;
+			}
+
+			element Knob {
+				size: 32, 64;
+				
+				set label="Scale";
+				set range=0.0f, 1.0f;
+				
+				bind: model->decay_scale;
+			}
+		}
+	
+		element Button {
+			size: 96, 24;
+			set label="Close";
+			
+			on clicked=>dismiss(int result=0);
+		}
+	}
+}
+
+}

@@ -1,0 +1,210 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <synth/additivesynth.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+#include "excitationedit.form.h"
+
+using namespace GUI;
+
+namespace Synth {
+
+form AdditiveSynth::Editor extends Window() extends InstrumentEditor<AdditiveSynth, AdditiveSynth::Editor>(AdditiveSynth* as) {
+	set title="Additive Synthesis";
+
+	vbox {
+		hbox {
+			element ListBox {
+				size: 192, 128;
+				name: partials_list;
+				
+				set entry_count=instrument->partials.size();
+				
+				column_model(const AdditiveSynth* instrument=instrument) [64] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "f=%.2f", instrument->partials[row].freq);
+					}
+				}
+				
+				column_model(const AdditiveSynth* instrument=instrument) [64] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "a=%.2f", instrument->partials[row].amplitude);
+					}
+				}
+				
+				column_model(const AdditiveSynth* instrument=instrument) [64] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "p=%.2f", instrument->partials[row].decaypower);
+					}
+				}
+				
+				on selection_changed(int row) {
+					AdditiveSynth::Partial& p=instrument->partials[row];
+					
+					freq_knob.bind_value(p.freq);
+					amp_knob.bind_value(p.amplitude);
+					decay_knob.bind_value(p.decaypower);
+				}
+			}
+			
+			vbox {
+				hbox {
+					vbox {
+						element Label {
+							size: 32, 16;
+							set text="Freq.";
+						}
+						
+						element Knob {
+							size: 32, 32;
+							name: freq_knob;
+							
+							set range=1.0f, 16.0f;
+						}
+					}
+					
+					vbox {
+						element Label {
+							size: 32, 16;
+							set text="Amp.";
+						}
+						
+						element Knob {
+							size: 32, 32;
+							name: amp_knob;
+							
+							set range=0.01f, 1.0f, Knob::LOGARITHMIC;
+						}
+					}
+					
+					vbox {
+						element Label {
+							size: 32, 16;
+							set text="Decay";
+						}
+						
+						element Knob {
+							size: 32, 32;
+							name: decay_knob;
+							
+							set range=0.25f, 4.0f, Knob::LOGARITHMIC;
+						}
+					}
+				}
+				
+				element CheckBox {
+					size: 0, 16;
+					halign: expand;
+					name: cb_integer_freqs;
+					
+					set label="Integer Frequencies";
+					
+					on clicked() {
+						if (!@.is_checked()) return;
+						
+						for (int i=0;i<instrument->partials.size();i++) {
+							AdditiveSynth::Partial& p=instrument->partials[i];
+							p.freq=rintf(p.freq);
+						}
+						
+						partials_list.set_selection(partials_list.get_selection());
+					}
+				}
+			}
+		}
+		
+		element CurveView {
+			size: 0, 128;
+			halign: expand;
+			
+			set description="Waveshaping Curve";
+			
+			curve_model(const AdditiveSynth* instrument=instrument) {
+				color: 0, 255, 255;
+				
+				eval(x) {
+					float y=0;
+					
+					for (int i=0;i<instrument->partials.size();i++) {
+						const AdditiveSynth::Partial& p=instrument->partials[i];
+						y+=sinf(2*M_PI*p.freq*x) * p.amplitude;
+					}
+										
+					return y*0.25f + 0.5f;
+				}
+			}
+		}
+		
+		hbox {
+			element Button {
+				size: 96, 24;
+				set label="Add";
+				
+				on clicked() {
+					AdditiveSynth::Partial p;
+					
+					p.freq=1.0f;
+					p.amplitude=1.0f;
+					p.decaypower=1.0f;
+					
+					instrument->partials.push_back(p);
+					
+					partials_list.set_entry_count(instrument->partials.size());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				set label="Remove";
+				
+				on clicked() {
+					int sel=partials_list.get_selection();
+					if (sel<0) return;
+					
+					instrument->partials.erase(instrument->partials.begin()+sel);
+					
+					partials_list.set_entry_count(instrument->partials.size());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				set label="Excitation";
+				
+				on clicked() {
+					ExcitationModelInstrument::Editor ee(instrument);
+					ee.run(get_root_window());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}
+

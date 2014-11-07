@@ -1,0 +1,132 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <synth/fmsynth.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+#include "excitationedit.form.h"
+
+using namespace GUI;
+
+using Synth::Instrument;
+
+#include "formantedit.h"
+
+namespace Synth {
+
+form FMSynth::Editor extends Window() extends InstrumentEditor<FMSynth, FMSynth::Editor>(FMSynth* fm) {
+	set title="Frequency Modulation Synthesis";
+
+	vbox {
+		// carrier
+		hbox {
+			element Label {
+				size: 128, 16;
+				
+				set text="Carrier:";
+			}
+			
+			element SpinBox {
+				size: 64, 24;
+				
+				set value=instrument->carrier_freq;
+				set minimum=1;
+				
+				on value_changed(int val)
+				{
+					instrument->carrier_freq=val;
+				}
+			}
+		}
+		
+		// modulator
+		hbox {
+			element Label {
+				size: 128, 16;
+				valign: center;
+				
+				set text="Modulator:";
+			}
+			
+			element SpinBox {
+				size: 64, 24;
+				valign: center;
+				
+				set value=instrument->mod1_freq;
+				set minimum=1;
+				
+				on value_changed(int val)
+				{
+					instrument->mod1_freq=val;
+				}
+			}
+			
+			element Knob {
+				size: 32, 64;
+				
+				set label="Decay";
+				set range=0.0f, 4.0f;
+				bind: instrument->mod1_decay;
+			}
+			
+			element Knob {
+				size: 32, 64;
+				
+				set label="Strength";
+				set range=0.1f, 10.0f, Knob::LOGARITHMIC;
+				bind: instrument->mod1_depth;
+			}
+		}
+		
+		hbox {
+			element Button {
+				size: 96, 24;
+				
+				set label="Excitation";
+				
+				on clicked() {
+					ExcitationModelInstrument::Editor ee(instrument);
+					ee.run(get_root_window());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Resonance";
+				
+				on clicked() {
+					Window* wnd=new FormantEditor(instrument);
+					MainWindow* root=get_root_window();
+					root->add(wnd);
+					root->bring_to_front(wnd);
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}

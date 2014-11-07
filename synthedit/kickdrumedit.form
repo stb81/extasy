@@ -1,0 +1,93 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/kickdrum.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+
+using namespace GUI;
+using Synth::Instrument;
+
+#include "formantedit.h"
+
+
+namespace Synth {
+
+form KickDrum::Editor extends Window() extends InstrumentEditor<KickDrum, KickDrum::Editor>(KickDrum* kd) {
+	set title="Kick Drum Editor";
+	
+	vbox {
+		hbox {
+			element Label {
+				size: 192, 24;
+				set text="Fundamental Frequency";
+			}
+			
+			element Knob {
+				size: 32, 32;
+				
+				set range=10.0f, 200.0f, Knob::LOGARITHMIC;
+				bind: instrument->basefreq;
+			}
+			
+			element Knob {
+				size: 32, 32;
+				
+				set range=0.1f, 0.9f;
+				bind: instrument->tpower;
+			}
+			
+			element Knob {
+				size: 32, 32;
+				
+				set range=0.5f, 10.0f;
+				bind: instrument->carrier_decay;
+			}
+			
+			element Knob {
+				size: 32, 32;
+				
+				set range=0.5f, 10.0f;
+				bind: instrument->modulator_decay;
+			}
+		}
+	
+		hbox {
+			element Button {
+				size: 96, 24;
+				
+				set label="Formants";
+				
+				on clicked() {
+					auto wnd=new FormantEditor(instrument);
+					auto root=get_root_window();
+					root->add(wnd);
+					root->bring_to_front(wnd);					
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}

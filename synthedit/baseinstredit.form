@@ -1,0 +1,102 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+
+using namespace GUI;
+using Synth::Instrument;
+
+#include "formantedit.h"
+
+namespace Synth {
+
+form BasicInstrumentEdit extends Window() extends Controller<Instrument>(Instrument* instr) {
+	set title="Basic Instrument Settings";
+	
+	vbox {
+		hbox {
+			element ColorLabelChooser {
+				size: 144, 144;
+				
+				set grid=3, 4;
+				
+				on color_picked(Color col) {
+					model->set_color(col);
+				}
+			}
+			
+			vbox {
+				hbox {
+					element Label {
+						size: 64, 16;
+						valign: center;
+						
+						set text="Name:";
+					}
+					
+					element LineEdit {
+						size: 256, 24;
+						
+						set text=model->get_name();
+						
+						on text_changed(const std::string& name) {
+							model->set_name(name.c_str());
+						}
+					}
+				}
+			}
+		}
+	
+		hbox {
+			element Button {
+				size: 96, 24;
+				
+				set label="Close";
+				
+				on clicked=>close();
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Edit Synth";
+				
+				on clicked() {
+					auto wnd=Synth::IInstrumentEditorProvider::create(model);
+					if (wnd)
+						wnd->show(get_root_window());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				
+				set label="Formants";
+				
+				on clicked() {
+					auto wnd=new FormantEditor(model);
+					wnd->show(get_root_window());
+				}
+			}
+		}
+	}
+}
+
+}
+

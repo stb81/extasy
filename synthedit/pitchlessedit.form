@@ -1,0 +1,140 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <synth/sequencer.h>
+#include <synth/pitchless.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+
+using namespace GUI;
+
+namespace Synth {
+
+form PitchlessSynth::Editor extends Window() extends InstrumentEditor<PitchlessSynth, PitchlessSynth::Editor>(PitchlessSynth* instr) {
+	set title="Pitchless Synthesis";
+
+	vbox {
+		hbox {
+			element ListBox {
+				size: 288, 128;
+				name: filter_list;
+				
+				set entry_count=instrument->filters.size();
+				
+				column_model(const PitchlessSynth* instrument=instrument) [80] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "f=%.0f Hz", instrument->filters[row].freq);
+					}
+				}			
+				
+				column_model(const PitchlessSynth* instrument=instrument) [56] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "Q=%.1f", instrument->filters[row].Q);
+					}
+				}			
+				
+				column_model(const PitchlessSynth* instrument=instrument) [64] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "%.1f dB", instrument->filters[row].gain);
+					}
+				}			
+				
+				column_model(const PitchlessSynth* instrument=instrument) [72] {
+					draw(x, y, row, focus) {
+						float c=focus ? 1.0f : 0.6f;
+						textprintf(x, y, c, c, c, "%.1f dB/s", instrument->filters[row].decay);
+					}
+				}			
+
+				on selection_changed(int row) {
+					if (row<0) return;
+					
+					auto& filter=instrument->filters[row];
+					knob_freq.bind_value(filter.freq);
+				}
+			}
+			
+			element Knob {
+				size: 32, 32;
+				name: knob_freq;
+				
+				set range=10.0f, 20000.0f, Knob::LOGARITHMIC;
+				set digits=0;
+				
+				on value_changed(float p, float v) {
+					auto& filter=instrument->filters[filter_list.get_selection()];
+					filter.init_filter(instrument->mixer);
+				}
+			}
+		}
+		
+		element CurveView {
+			size: 0, 256;
+			halign: expand;
+			
+			curve_model(const PitchlessSynth* instrument=instrument) {
+				color: 0, 255, 255;
+				
+				eval(x) {
+					float freq=powf(2.0f, (x-1.0f)*10.0f) * 20000.0f;
+					
+					std::complex<float> z=std::polar<float>(1.0f, 2*M_PI*freq/instrument->mixer.get_samplerate());
+					
+					std::complex<float> H(0, 0);
+					for (int i=0;i<instrument->filters.size();i++) {
+						std::complex<float> w=instrument->filters[i].filter.response(z);
+						H+=w;
+					}
+					
+					return logf(std::norm(H)) / M_LN10 * 0.0625f + 0.5f;
+				}
+			}
+		}
+
+		hbox {
+			element Button {
+				size: 96, 24;
+				set label="Add";
+				
+				on clicked() {
+					instrument->mixer.kill_all_tones_with_instrument(instrument);
+					
+					Filter filter(1000, 1.0f, 0, 100.0f);
+					filter.init_filter(instrument->mixer);
+					
+					instrument->filters.push_back(filter);
+
+					filter_list.set_entry_count(instrument->filters.size());
+					filter_list.set_selection(instrument->filters.size()-1);
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}
