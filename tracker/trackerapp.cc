@@ -474,11 +474,23 @@ void NewInstrumentDlg::create()
 
 void NewInstrumentDlg::load()
 {
+	FileChooserDialog* filechooser=FileChooserDialog::create_load_dialog("Load Instrument from File...");
+	if (filechooser->run(get_root_window())) {
+		delete filechooser;
+		return;
+	}
+	
 	close();
 	
-	FileDeserializer deser("test.ins", *mixer);
+	FileDeserializer deser(filechooser->get_filename().c_str(), *mixer);
+	delete filechooser;
 	
 	Instrument* instr;
+	
+	int magic, version;
+	deser >> magic >> tag("version", version);
+	// FIXME: check magic and version
+	
 	deser >> instr;
 	
 	module->instruments[instrument_number]=instr;
@@ -872,6 +884,11 @@ void TrackerApp::save_instr_clicked()
 	}
 	
 	Serializer ser;
+	ser << INSTRUMENT_FILE_MAGIC;
+
+	int version=1;
+	ser << tag("version", version);
+	
 	ser << instr;
 	ser.write_to_file(filechooser->get_filename().c_str());
 	

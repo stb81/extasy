@@ -23,6 +23,10 @@ class Mixer;
 class Serializer;
 
 
+#define MODULE_FILE_MAGIC		0x4D435458
+#define INSTRUMENT_FILE_MAGIC	0x49435458
+
+
 template<typename T>
 class serialization_tag_t {
 	friend class Deserializer;
@@ -109,6 +113,13 @@ public:
 	
 	template<typename T>
 	Serializer& operator<<(const T& v)
+	{
+		store(v);
+		return *this;
+	}
+	
+	template<typename T>
+	Serializer& operator<<(int v)
 	{
 		store(v);
 		return *this;
