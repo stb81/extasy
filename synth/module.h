@@ -52,9 +52,16 @@ public:
 	};
 	
 	Pattern(const Module&);
+	Pattern(Deserializer&);
 	~Pattern();
+
+	void serialize(Serializer&) const;
+	static Pattern* deserialize(Deserializer&);
 	
 	Note& operator()(int ch, int row)
+	{ return notes[ch+row*16]; }
+	
+	const Note& operator()(int ch, int row) const
 	{ return notes[ch+row*16]; }
 	
 	void set_name(const char* n)
@@ -212,6 +219,9 @@ struct Module {
 		{
 			return pattern;
 		}
+		
+		void serialize(Serializer&) const;
+		void deserialize(Deserializer&);
 	};
 	
 	Instrument*	instruments[256];
@@ -220,6 +230,10 @@ struct Module {
 	std::list<arrangement_item_t>	arrangement;
 	
 	Module();
+	Module(Deserializer&);
+	
+	void serialize(Serializer&) const;
+	static Module* deserialize(Deserializer&);
 };
 
 }

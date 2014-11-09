@@ -505,7 +505,7 @@ void NewInstrumentDlg::ClassNameColumn::draw(int x, int y, int row, bool highlig
 
 class InstrumentNameColumn:public ListBox::Column {
 	ListBox*	listbox;
-	Module*		module;
+	Module*&	module;
 	
 	virtual void draw(int, int, int, bool) const;
 	virtual Widget* edit(int);
@@ -513,11 +513,12 @@ class InstrumentNameColumn:public ListBox::Column {
 	void accept_edit(LineEdit*, int);
 
 public:
-	InstrumentNameColumn(ListBox* lb, Module* mod):Column(256), listbox(lb), module(mod) {}
+	InstrumentNameColumn(ListBox* lb, Module*& mod):Column(256), listbox(lb), module(mod) {}
 };
 
 void InstrumentNameColumn::draw(int x, int y, int row, bool highlighted) const
 {
+	if (!module) return;
 	Instrument* instr=module->instruments[row];
 	
 	FontSpec font;
@@ -532,8 +533,10 @@ void InstrumentNameColumn::draw(int x, int y, int row, bool highlighted) const
 
 Widget* InstrumentNameColumn::edit(int row)
 {
+	if (!module) return nullptr;
+	
 	Instrument* instr=module->instruments[row];
-	if (!instr) return NULL;
+	if (!instr) return nullptr;
 	
 	LineEdit* ed=new LineEdit(0, 0, width-2, 24);
 	ed->set_text(instr->get_name());
@@ -551,14 +554,17 @@ Widget* InstrumentNameColumn::edit(int row)
 
 void InstrumentNameColumn::accept_edit(LineEdit* ed, int row)
 {
+	if (!module) return;
+	
 	Instrument* instr=module->instruments[row];
+	
 	if (instr)
 			instr->set_name(ed->get_text());
 }
 
 class PatternNameColumn:public ListBox::Column {
 	ListBox*	listbox;
-	Module*		module;
+	Module*&	module;
 	
 	virtual void draw(int, int, int, bool) const;
 	virtual Widget* edit(int);
@@ -566,11 +572,13 @@ class PatternNameColumn:public ListBox::Column {
 	void accept_edit(LineEdit*, int);
 
 public:
-	PatternNameColumn(ListBox* lb, Module* mod):Column(256), listbox(lb), module(mod) {}
+	PatternNameColumn(ListBox* lb, Module*& mod):Column(256), listbox(lb), module(mod) {}
 };
 
 void PatternNameColumn::draw(int x, int y, int row, bool highlighted) const
 {
+	if (!module) return;
+	
 	Pattern* pattern=module->patterns[row];
 	
 	FontSpec font;
@@ -582,6 +590,8 @@ void PatternNameColumn::draw(int x, int y, int row, bool highlighted) const
 
 Widget* PatternNameColumn::edit(int row)
 {
+	if (!module) return nullptr;
+	
 	Pattern* pattern=module->patterns[row];
 	
 	LineEdit* ed=new LineEdit(0, 0, width-2, 24);
@@ -600,6 +610,8 @@ Widget* PatternNameColumn::edit(int row)
 
 void PatternNameColumn::accept_edit(LineEdit* ed, int row)
 {
+	if (!module) return;
+	
 	Pattern* pattern=module->patterns[row];
 	pattern->set_name(ed->get_text());
 }
@@ -638,6 +650,9 @@ class TrackerApp:public MainWindow {
 	void select_pattern_by_index(int index);
 	void select_pattern(Pattern*);
 	void save_instr_clicked();
+	void save_module_clicked();
+	void load_module_clicked();
+	void new_module_clicked();
 	void toggle_spectrum_analyzer();
 	void toggle_arrangement_editor();
 	void toggle_pattern_editor();
@@ -664,6 +679,7 @@ TrackerApp::TrackerApp()
 
 	instrument_list=new ListBox(0,0,256,128);
 	instrument_list->add_column(new ListBox::IndexColumn());
+	instrument_list->add_column(new InstrumentNameColumn(instrument_list, module));
 	instrument_list->set_entry_count(256);
 	instrument_list->selection_changed.connect(sigc::mem_fun(this, &TrackerApp::instrument_selection_changed));
 	paned->add_pane("Instruments", instrument_list);
@@ -688,6 +704,7 @@ TrackerApp::TrackerApp()
 	pane->add(but);
 	
 	pattern_list=new ListBox(512, 0, 512, 128);
+	pattern_list->add_column(new PatternNameColumn(pattern_list, module));
 	pattern_list->selection_changed.connect(sigc::mem_fun(this, &TrackerApp::select_pattern_by_index));
 	pattern_list->entry_edited.connect(sigc::mem_fun(this, &TrackerApp::pattern_name_edited));
 	paned->add_pane("Patterns", pattern_list);
@@ -731,6 +748,18 @@ TrackerApp::TrackerApp()
 	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::toggle_pattern_editor));
 	pane->add(but);
 	
+	but=new Button(400, 16, 128, 24, "New Module");
+	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::new_module_clicked));
+	pane->add(but);
+	
+	but=new Button(400, 48, 128, 24, "Load Module");
+	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::load_module_clicked));
+	pane->add(but);
+	
+	but=new Button(400, 80, 128, 24, "Save Module");
+	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::save_module_clicked));
+	pane->add(but);
+	
 	spectrum_analyzer=nullptr;
 	arrangement_edit=nullptr;
 	pattern_stock_edit=nullptr;
@@ -745,13 +774,15 @@ void TrackerApp::set_mixer(Mixer* m)
 
 void TrackerApp::set_module(Module* m)
 {
+	if (pattern_stock_edit)
+		toggle_pattern_editor();
+	if (arrangement_edit)
+		toggle_arrangement_editor();
+
 	module=m;
 	
 	sequencer->set_module(module);
 	
-	instrument_list->add_column(new InstrumentNameColumn(instrument_list, module));
-
-	pattern_list->add_column(new PatternNameColumn(pattern_list, module));
 	pattern_list->set_entry_count(module->patterns.size());
 	
 	pattern_edit->set_module(module);
@@ -893,6 +924,58 @@ void TrackerApp::save_instr_clicked()
 	ser.write_to_file(filechooser->get_filename().c_str());
 	
 	delete filechooser;
+}
+
+void TrackerApp::save_module_clicked()
+{
+	FileChooserDialog* filechooser=FileChooserDialog::create_save_dialog("Save Module...");
+	if (filechooser->run(this)) {
+		delete filechooser;
+		return;
+	}
+	
+	Serializer ser;
+	ser << MODULE_FILE_MAGIC;
+
+	int version=1;
+	ser << tag("version", version);
+	
+	ser << module;
+	ser.write_to_file(filechooser->get_filename().c_str());
+	
+	delete filechooser;
+}
+
+void TrackerApp::load_module_clicked()
+{
+	FileChooserDialog* filechooser=FileChooserDialog::create_load_dialog("Load Module...");
+	if (filechooser->run(get_root_window())) {
+		delete filechooser;
+		return;
+	}
+	
+	FileDeserializer deser(filechooser->get_filename().c_str(), *mixer);
+	delete filechooser;
+	
+	Instrument* instr;
+	
+	int magic, version;
+	deser >> magic >> tag("version", version);
+	// FIXME: check magic and version
+	
+	Module* mod;
+	deser >> mod;
+	
+	if (mod) {
+		delete module;
+		set_module(mod);
+	}
+}
+
+void TrackerApp::new_module_clicked()
+{
+	delete module;
+	set_module(new Module);
 }
 
 void TrackerApp::toggle_spectrum_analyzer()

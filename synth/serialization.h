@@ -17,9 +17,17 @@
 #ifndef INCLUDE_SYNTH_SERIALIZATION_H
 #define INCLUDE_SYNTH_SERIALIZATION_H
 
+namespace std {
+
+template<typename T, typename Alloc>
+class list;
+
+}
+
 namespace Synth {
 
 class Mixer;
+class Module;
 class Serializer;
 
 
@@ -71,13 +79,24 @@ public:
 class Serializer {
 	std::vector<unsigned char>	buffer;
 	
-	template<typename T>
-	void store(const std::vector<T>& v)
+	template<typename T, typename A>
+	void store(const std::vector<T,A>& v)
 	{
 		store((int) v.size());
 		
-		for (auto i=v.begin(); i!=v.end(); i++)
-			store(*i);
+		//for (auto i=v.begin(); i!=v.end(); i++)
+		for (auto &i: v)
+			*this << i;
+	}
+	
+	template<typename T, typename A>
+	void store(const std::list<T,A>& v)
+	{
+		store((int) v.size());
+		
+		//for (auto i=v.begin(); i!=v.end(); i++)
+		for (auto &i: v)
+			*this << i;
 	}
 	
 	template<typename T>
@@ -87,9 +106,11 @@ class Serializer {
 	}
 
 	void store(int);
+	void store(unsigned int);
 	void store(float);
 	void store(const char*);
 	void store(const std::string&);
+	void store_nullptr();
 	
 public:
 	Serializer();
@@ -100,14 +121,22 @@ public:
 	template<typename T>
 	Serializer& operator<<(const T* v)
 	{
-		v->serialize(*this);
+		if (v)
+			v->serialize(*this);
+		else
+			store_nullptr();
+			
 		return *this;
 	}
 	
 	template<typename T>
 	Serializer& operator<<(T* v)
 	{
-		v->serialize(*this);
+		if (v)
+			v->serialize(*this);
+		else
+			store_nullptr();
+			
 		return *this;
 	}
 	
@@ -131,6 +160,9 @@ public:
 		return* this;
 	}
 	
+	void putc(unsigned char c);
+	void align();
+	
 	class Tag {
 		Serializer&	ser;
 		const char*	name;
@@ -146,13 +178,14 @@ public:
 class Deserializer {
 protected:
 	Mixer&	mixer;
+	Module*	module=nullptr;
 
 	char*	buffer;
 	int		readptr;
 	int		size;
 	
-	template<typename T>
-	void read(std::vector<T>& v)
+	template<typename T, typename A>
+	void read(std::vector<T,A>& v)
 	{
 		int n;
 		
@@ -160,8 +193,22 @@ protected:
 		
 		v.resize(n);
 		
-		for (int i=0;i<n;i++)
-			read(v[i]);
+		for (auto& i: v)
+			*this >> i;
+	}
+	
+	template<typename T, typename A>
+	void read(std::list<T,A>& v)
+	{
+		int n;
+		
+		read(n);
+
+		for (int i=0;i<n;i++) {
+			T data;
+			*this >> data;
+			v.push_back(data);
+		}
 	}
 	
 	template<typename T>
@@ -171,6 +218,7 @@ protected:
 	}
 	
 	void read(int&);
+	void read(unsigned int&);
 	void read(float&);
 	void read(std::string&);
 	
@@ -209,6 +257,24 @@ public:
 	bool is_valid() const
 	{
 		return buffer!=nullptr;
+	}
+	
+	const char* peekstr() const
+	{
+		return buffer+readptr;
+	}
+	
+	unsigned char getc();
+	void align();
+	
+	void set_module(Module* mod)
+	{
+		module=mod;
+	}
+	
+	Module* get_module() const
+	{
+		return module;
 	}
 };
 

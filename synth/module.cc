@@ -41,6 +41,51 @@ Module::Module()
 		instruments[i]=0;
 }
 
+Module::Module(Deserializer& deser)
+{
+	deser.set_module(this);
+	
+	for (int i=0;i<256;i++)
+		deser >> instruments[i];
+	
+	deser >> patterns;
+	deser >> tag("arrangement", arrangement);
+}
+
+void Module::serialize(Serializer& ser) const
+{
+	Serializer::Tag _tag(ser, "Module");
+	
+	for (int i=0;i<256;i++)
+		ser << instruments[i];
+		
+	ser << patterns;
+	ser << tag("arrangement", arrangement);
+}
+
+Module* Module::deserialize(Deserializer& deser)
+{
+	Deserializer::Tag _tag(deser, "Module");
+	
+	return new Module(_tag);
+}
+
+
+void Module::arrangement_item_t::serialize(Serializer& ser) const
+{
+	ser << pattern->get_index() << channelmask;
+}
+
+void Module::arrangement_item_t::deserialize(Deserializer& deser)
+{
+	int patindex;
+	
+	deser >> patindex >> channelmask;
+	
+	pattern=deser.get_module()->patterns[patindex];
+}
+
+
 Pattern::Pattern(const Module& module):module(module)
 {
 	notes=new Note[16*64];
@@ -56,9 +101,91 @@ Pattern::Pattern(const Module& module):module(module)
 	}
 }
 
+Pattern::Pattern(Deserializer& deser):module(*deser.get_module())
+{
+	deser >> tag("name", name);
+
+	notes=new Note[16*64];
+	
+	for (int i=0;i<16;i++) {
+		Deserializer::Tag chan(deser, "channel");
+
+		int row=0;
+		while (row<64) {
+			unsigned char flags=chan.getc();
+			
+			while (flags&0x0f) {
+				if (row>=64) break;	// FIXME: illegal, throw invalid file exception
+				
+				auto& note=(*this)(i, row++);
+				note.flags=0;
+				note.note=0;
+				note.instrument=0;
+				note.volume=0;
+				note.effect=0;
+				flags--;
+			}
+			
+			if (row>=64) break;
+			
+			auto& note=(*this)(i, row++);
+			note.flags=flags>>4;
+			note.note=(flags&0x10) ? chan.getc() : 0;
+			note.instrument=(flags&0x20) ? chan.getc() : 0;
+			note.volume=(flags&0x40) ? chan.getc() : 0;
+			note.effect=(flags&0x80) ? (chan.getc()<<8) | chan.getc() : 0;
+		}
+	}
+}
+
 Pattern::~Pattern()
 {
 	delete[] notes;
+}
+
+void Pattern::serialize(Serializer& ser) const
+{
+	Serializer::Tag _tag(ser, "Pattern");
+	
+	ser << tag("name", name);
+	
+	for (int i=0;i<16;i++) {
+		Serializer::Tag chan(ser, "channel");
+
+		int row=0;
+		while (row<64) {
+			int skip=0;
+			while (skip<16 && row+skip<64 && !(*this)(i, row+skip).flags) skip++;
+			
+			row+=skip;
+			if (skip==16) {
+				ser.putc(0x0F);
+				continue;
+			}
+
+			auto& note=(*this)(i, row++);
+			
+			ser.putc((note.flags<<4) | skip);
+			
+			if (note.flags&1)
+				ser.putc(note.note);
+			if (note.flags&2)
+				ser.putc(note.instrument);
+			if (note.flags&4)
+				ser.putc(note.volume);
+			if (note.flags&8) {
+				ser.putc(note.effect>>8);
+				ser.putc(note.effect&0xff);
+			}
+		}
+	}
+}
+
+Pattern* Pattern::deserialize(Deserializer& deser)
+{
+	Deserializer::Tag _tag(deser, "Pattern");
+	
+	return new Pattern(_tag);
 }
 
 int Pattern::get_index() const
@@ -174,11 +301,19 @@ void Instrument::serialize(Serializer& ser) const
 	
 Instrument* Instrument::deserialize(Deserializer& deser)
 {
+	if (!strcmp(deser.peekstr(), "null"))  {
+		Deserializer::Tag _tag(deser, "null");
+		return nullptr;
+	}
+	
 	Deserializer::Tag _tag(deser, "Instrument");
 	if (!_tag.is_valid()) return nullptr;
 	
 	std::string classtype;
-	_tag >> tag("class", classtype);
+	_tag >> tag("class", classtype, std::string());
+	
+	if (classtype.empty())
+		return nullptr;
 	
 	Instrument* instr=create(deser.get_mixer(), classtype.c_str());
 	instr->do_deserialize(_tag);
