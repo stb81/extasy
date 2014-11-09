@@ -115,6 +115,13 @@ form FileChooserDialog extends Dialog() extends FileChooser() {
 		return dlg;
 	}
 	
+	factory create_load_dialog(const char* title) {
+		FileChooserDialog* dlg=new FileChooserDialog;
+		dlg->set_title(title);
+		dlg->openbut.set_label("Load");
+		return dlg;
+	}
+	
 	method get_filename()->std::string {
 		return directory+"/"+filename.get_text();
 	}
