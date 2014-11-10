@@ -27,15 +27,8 @@ namespace Synth {
 Module::Module()
 {
 	patterns.push_back(new Pattern(*this));
-	patterns.push_back(new Pattern(*this));
-	patterns.back()->set_name("Another pattern");
 	
-	for (int i=0;i<4;i++) {
-		arrangement_item_t item;
-		item.pattern=patterns[i&1];
-		item.channelmask=0;
-		arrangement.push_back(item);
-	}
+	arrangement.push_back(arrangement_item_t { patterns[0], 0 });
 	
 	for (int i=0;i<256;i++)
 		instruments[i]=0;
