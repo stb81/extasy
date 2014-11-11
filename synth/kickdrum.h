@@ -33,6 +33,12 @@ public:
 	
 	virtual Synth::Tone* play_note(int, int);
 	
+	static Instrument* create(Mixer&);
+	
+protected:
+	virtual void do_serialize(Serializer&) const;
+	virtual void do_deserialize(Deserializer&);
+
 private:
 	float	basefreq;
 	float	tpower;

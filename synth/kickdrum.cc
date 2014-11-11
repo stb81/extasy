@@ -15,6 +15,7 @@
  *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
  
 #include "kickdrum.h"
+#include "serialization.h"
 
 namespace Synth {
 
@@ -54,6 +55,11 @@ void KickDrum::Tone::synth(float** out, int count)
 		decayed=true;
 }
 
+Instrument* KickDrum::create(Mixer& m)
+{
+	return new KickDrum(m);
+}
+
 KickDrum::KickDrum(Mixer& m):Instrument(m)
 {
 	basefreq=50.0f;
@@ -69,6 +75,22 @@ KickDrum::~KickDrum()
 Synth::Tone* KickDrum::play_note(int note, int volume)
 {
 	return new Tone(*this, ldexpf(volume, -7));
+}
+
+void KickDrum::do_serialize(Serializer& ser) const
+{
+	ser << tag("class", "KickDrum");
+	
+	Instrument::do_serialize(ser);
+	
+	ser << tag("freq", basefreq) << tag("exponent", tpower) << tag("cdecay", carrier_decay) << tag("mdecay", modulator_decay);
+}
+
+void KickDrum::do_deserialize(Deserializer& deser)
+{
+	Instrument::do_deserialize(deser);
+
+	deser >> tag("freq", basefreq) >> tag("exponent", tpower) >> tag("cdecay", carrier_decay) >> tag("mdecay", modulator_decay);
 }
 
 }

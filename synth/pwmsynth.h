@@ -23,7 +23,13 @@ public:
 	PWMSynth(Mixer&);
 	virtual ~PWMSynth();
 	
+	static Instrument* create(Mixer&);
+	
 	virtual Synth::Tone* play_note(int, int);	
+	
+protected:
+	virtual void do_serialize(Serializer&) const;
+	virtual void do_deserialize(Deserializer&);
 };
 
 }

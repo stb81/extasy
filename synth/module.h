@@ -105,7 +105,6 @@ public:
 	};
 	
 	Instrument(Mixer&);
-	Instrument(Deserializer&);
 	virtual ~Instrument();
 	
 	virtual Tone* play_note(int, int)=0;

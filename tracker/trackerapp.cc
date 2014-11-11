@@ -1056,9 +1056,11 @@ int main(int argn, char* argv[])
 	
 	init_audio();
 	
-	Instrument::register_class("Pad Synth", PadSynth::create);
+	Instrument::register_class("PadSynth", PadSynth::create);
 	Instrument::register_class("Hyper Saw", HyperSaw::create);
 	Instrument::register_class("CustomSynth", CustomSynth::create);
+	Instrument::register_class("KickDrum", KickDrum::create);
+	Instrument::register_class("PWMSynth", PWMSynth::create);
 	
 	default_font=Font::load_from_file("fonts/sans.ft");
 	thin_font=Font::load_from_file("fonts/sansthin.ft");

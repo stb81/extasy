@@ -22,6 +22,7 @@
 #include "module.h"
 #include "sequencer.h"
 #include "padsynth.h"
+#include "serialization.h"
 
 namespace Synth {
 	
@@ -149,6 +150,38 @@ PadSynth::~PadSynth()
 	
 	for (int i=0;i<4;i++)
 		delete samples[i];
+}
+
+void PadSynth::do_serialize(Serializer& ser) const
+{
+	ser << tag("class", "PadSynth");
+	
+	Instrument::do_serialize(ser);
+	
+	ser << tag("exponent", exponent) << tag("bandwidth", bandwidth) << tag("length", length);
+	
+	{
+		Serializer::Tag _tag(ser, "bands");
+		
+		for (int i=0;i<256;i++)
+			ser << band_coefficients[i];
+	}
+}
+
+void PadSynth::do_deserialize(Deserializer& deser)
+{
+	Instrument::do_deserialize(deser);
+	
+	deser >> tag("exponent", exponent) >> tag("bandwidth", bandwidth) >> tag("length", length);
+	
+	{
+		Deserializer::Tag _tag(deser, "bands");
+		
+		for (int i=0;i<256;i++)
+			_tag >> band_coefficients[i];
+	}
+	
+	build_pad();
 }
 
 void PadSynth::create_random_timbre()

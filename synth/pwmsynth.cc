@@ -19,6 +19,7 @@
 #include "module.h"
 #include "sequencer.h"
 #include "pwmsynth.h"
+#include "serialization.h"
 
 namespace Synth {
 
@@ -53,6 +54,23 @@ PWMSynth::PWMSynth(Mixer& m):Instrument(m)
 
 PWMSynth::~PWMSynth()
 {
+}
+
+Instrument* PWMSynth::create(Mixer& m)
+{
+	return new PWMSynth(m);
+}
+
+void PWMSynth::do_serialize(Serializer& ser) const
+{
+	ser << tag("class", "PWMSynth");
+	
+	Instrument::do_serialize(ser);
+}
+
+void PWMSynth::do_deserialize(Deserializer& deser)
+{
+	Instrument::do_deserialize(deser);
 }
 
 Synth::Tone* PWMSynth::play_note(int note, int volume)

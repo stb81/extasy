@@ -198,17 +198,8 @@ Instrument::Instrument(Mixer& m):mixer(m)
 	name="Unnamed Instrument";
 	color=0x55aaff;
 	
-	/*resonance.push_back(Resonance(270, 2.0f, 10.0f));
-	resonance.push_back(Resonance(2300, 3.0f, 5.0f));
-	resonance.push_back(Resonance(3000, 5.0f, 2.5f));*/
-	
 	for (int i=0;i<resonance.size();i++)
 		resonance[i].init_filter(mixer);
-}
-
-Instrument::Instrument(Deserializer& deser):mixer(deser.get_mixer())
-{
-	deser >> name >> resonance;
 }
 
 Instrument::~Instrument()
@@ -309,6 +300,8 @@ Instrument* Instrument::deserialize(Deserializer& deser)
 		return nullptr;
 	
 	Instrument* instr=create(deser.get_mixer(), classtype.c_str());
+	if (!instr) return nullptr;
+	
 	instr->do_deserialize(_tag);
 	
 	return instr;
@@ -316,12 +309,12 @@ Instrument* Instrument::deserialize(Deserializer& deser)
 	
 void Instrument::do_serialize(Serializer& ser) const
 {
-	ser << tag("name", name) << tag("resonance", resonance);
+	ser << tag("name", name) << tag("color", color) << tag("resonance", resonance);
 }
 
 void Instrument::do_deserialize(Deserializer& deser)
 {
-	deser >> tag("name", name) >> tag("resonance", resonance);
+	deser >> tag("name", name) >> tag("color", color) >> tag("resonance", resonance);
 }
 
 
