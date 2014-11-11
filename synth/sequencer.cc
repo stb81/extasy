@@ -15,6 +15,7 @@
  *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
  
 #include "synthbits.h"
+#include "filter.h"
 #include "module.h"
 #include "sequencer.h"
 
@@ -28,53 +29,28 @@ Tone::Tone(const Instrument& instr):instrument(instr)
 	channel=-1;
 	volume=0;
 	modulation=1.0f;
-	panning=128;
 	
-	if (!instr.resonance.empty()) {
-		numresonancefilters=0;
-		for (int i=0;i<instr.resonance.size();i++)
-			numresonancefilters+=instr.resonance[i].order;
-		
-		resonance=new BiQuad::Filter[numresonancefilters*2];
-		
-		BiQuad::Filter* ptr=resonance;
-		for (int i=0;i<instr.resonance.size();i++)
-			for (int j=0;j<instr.resonance[i].order;j++) {
-				*ptr++=BiQuad::Filter(instr.resonance[i].filter);
-				*ptr++=BiQuad::Filter(instr.resonance[i].filter);
-			}
-	}
-	else {
-		resonance=nullptr;
-		numresonancefilters=0;
-	}
+	filters.push_back(new VolumeScalerInstance);
+	
+	for (auto& res: instr.resonance)
+		for (int i=0;i<res.order;i++)
+			filters.push_back(new BiQuadFilterInstance(res.filter));
 	
 	instr.mixer.add_tone(this);
 }
 
 Tone::~Tone()
 {
-	delete[] resonance;
+	for (auto f: filters)
+		delete f;
 }
 
 void Tone::generate(float** samples, int count)
 {
 	synth(samples, count);
 	
-	float vol[2];
-	
-	vol[0]=0.5 * (1+cosf(ldexpf(panning, -8)*M_PI));
-	vol[1]=0.5 * (1-cosf(ldexpf(panning, -8)*M_PI));
-	
-	for (int i=0;i<2;i++)
-		for (int j=0;j<count;j++) {
-			float v=samples[i][j];
-			
-			for (int k=0;k<numresonancefilters;k++)
-				v=resonance[2*k+i](v);
-			
-			samples[i][j]=v * vol[i];
-		}
+	for (auto f: filters)
+		f->apply(samples, count);
 }
 
 void Tone::apply_effect(unsigned short effect)
@@ -83,9 +59,9 @@ void Tone::apply_effect(unsigned short effect)
 	case Pattern::MODULATION:
 		modulation=ldexpf(effect&0xff, -8);
 		break;
-	case Pattern::PANNING:
-		panning=effect&0xff;
-		break;
+	default:
+		for (auto f: filters)
+			f->handle_effect(effect);
 	}
 }
 

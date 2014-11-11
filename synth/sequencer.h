@@ -23,6 +23,8 @@ namespace Synth {
 
 #define Voice Tone
 
+class IFilterInstance;
+
 class Tone {
 public:
 	Tone(const Instrument&);
@@ -54,11 +56,10 @@ protected:
 	
 private:
 	const Instrument&	instrument;
-	BiQuad::Filter*		resonance;
-	int					numresonancefilters;
+
+	std::vector<IFilterInstance*>	filters;
 	
 	int			channel;
-	int			panning;
 };
 
 

@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-OBJS=module.o sequencer.o serialization.o padsynth.o fmsynth.o additivesynth.o pwmsynth.o pitchless.o kickdrum.o hypersaw.o vocalpad.o customsynth.o customscanner.o customparser.o
+OBJS=module.o sequencer.o filter.o serialization.o padsynth.o fmsynth.o additivesynth.o pwmsynth.o pitchless.o kickdrum.o hypersaw.o vocalpad.o customsynth.o customscanner.o customparser.o
 
 CFLAGS=-std=c++11 -O2 -march=core2 -ffast-math -fopenmp
 
