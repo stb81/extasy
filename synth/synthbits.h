@@ -198,6 +198,16 @@ public:
 						(gain+1)-(gain-1)*cosf(omega)+2*sqrtf(gain)*alpha, 2*((gain-1)-(gain+1)*cosf(omega)), (gain+1)-(gain-1)*cosf(omega)-2*sqrtf(gain)*alpha);
 	}
 	
+	static BiQuad dcstop(float pole)
+	{
+		return BiQuad(1.0f, -2.0f, 1.0f, 1.0f, -2.0f*pole, pole*pole);
+	}
+	
+	static BiQuad dcpass(float pole)
+	{
+		return BiQuad(1.0f, 2.0f, 1.0f, 1.0f, -2.0f*pole, pole*pole) * ((1.0f-pole)*(1.0f-pole));
+	}
+	
 private:
 	float	a1, a2, b0, b1, b2;
 };
