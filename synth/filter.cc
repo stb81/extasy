@@ -20,6 +20,10 @@
 
 namespace Synth {
 	
+IFilterInstance::~IFilterInstance()
+{
+}
+	
 void IFilterInstance::handle_effect(unsigned short effect)
 {
 }
@@ -60,6 +64,37 @@ void BiQuadFilterInstance::apply(float** samples, int count)
 	for (int i=0;i<count;i++) {
 		samples[0][i]=filterl(samples[0][i]);
 		samples[1][i]=filterr(samples[1][i]);
+	}
+}
+
+
+ChorusInstance::ChorusInstance(float depth, int numvoices):delayl((int) ceilf(depth)), delayr((int) ceilf(depth)), depth(depth), numvoices(numvoices)
+{
+	noise=new LFNoise[numvoices*2];
+	
+	for (int i=0;i<numvoices*2;i++)
+		noise[i].init(0.0001f + i*0.000015f);
+}
+
+ChorusInstance::~ChorusInstance()
+{
+	delete[] noise;
+}
+
+void ChorusInstance::apply(float** samples, int count)
+{
+	for (int i=0;i<2;i++) {
+		VarDelay& delay=i ? delayr : delayl;
+		
+		for (int j=0;j<count;j++) {
+			delay.push(samples[i][j]);
+			
+			float v=0;
+			for (int k=0;k<numvoices;k++)
+				v+=delay(noise[2*k+i]()*depth);
+			
+			samples[i][j]=v / numvoices;
+		}
 	}
 }
 

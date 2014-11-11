@@ -21,6 +21,7 @@ namespace Synth {
 	
 class IFilterInstance {
 public:
+	virtual ~IFilterInstance();
 	virtual void apply(float**, int) = 0;
 	virtual void handle_effect(unsigned short);
 };
@@ -43,6 +44,22 @@ class BiQuadFilterInstance:public IFilterInstance {
 	
 public:
 	BiQuadFilterInstance(const BiQuad&);
+
+	virtual void apply(float**, int);
+};
+
+
+class ChorusInstance:public IFilterInstance {
+	VarDelay	delayl;
+	VarDelay	delayr;
+	LFNoise*	noise;
+	
+	float		depth;
+	int			numvoices;
+	
+public:
+	ChorusInstance(float depth, int voices);
+	virtual ~ChorusInstance();
 
 	virtual void apply(float**, int);
 };

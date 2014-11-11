@@ -17,10 +17,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <fftw3.h>
 #include "synthbits.h"
 #include "module.h"
 #include "sequencer.h"
+#include "filter.h"
 #include "fmsynth.h"
 
 namespace Synth {
@@ -34,30 +34,23 @@ public:
 
 private:
 	FMSynth&	fmsynth;
-	VarDelay	delay;
 	
 	BiQuad		allpass_coeffs;
 	BiQuad::Filter	allpass_filter;
 	BiQuad::Filter	allpass_filter2;
-	
-	Noise		noisel[8];
-	Noise		noiser[8];
 	
 	float		omega;
 	
 	int			ptr;
 };
 
-FMSynth::Tone::Tone(FMSynth& sy, float freq, int volume):ExcitationModelTone(sy, freq, volume), fmsynth(sy), delay(256)
+FMSynth::Tone::Tone(FMSynth& sy, float freq, int volume):ExcitationModelTone(sy, freq, volume), fmsynth(sy)
 {
 	ptr=0;
 	
 	omega=sy.mixer.freq2omega(freq);
 	
-	for (int i=0;i<8;i++) {
-		noisel[i].init(0.0001f + i*0.00003f);
-		noiser[i].init(0.0001f + i*0.00003f);
-	}
+	add_filter(new ChorusInstance(250.0f, 8));
 	
 	allpass_coeffs=BiQuad::allpass(omega*3.0f, 2.0f);
 	allpass_filter=BiQuad::Filter(allpass_coeffs);
@@ -87,19 +80,7 @@ void FMSynth::Tone::synth(float** out, int count)
 		
 		v-=(sinf(alpha*v + delta) - v) / (alpha*cosf(alpha*v + delta) - 1.0f);
 
-		float tmp=v * energy[i];
-		
-		v=w=0;
-		for (int j=0;j<8;j++) {
-			v+=delay(noisel[j]() * 250.0f * modulation) * 0.125f;
-			w+=delay(noiser[j]() * 250.0f * modulation) * 0.125f;
-		}
-
-		tmp+=0.45f*(v-w);
-		delay.push(allpass_filter2(allpass_filter(tmp)));
-		
-		out[0][i]=v;
-		out[1][i]=w;
+		out[0][i]=out[1][i]=v * energy[i];
 	}	
 }
 

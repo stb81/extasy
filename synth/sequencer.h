@@ -48,6 +48,11 @@ public:
 protected:
 	virtual void synth(float**, int)=0;
 	
+	void add_filter(IFilterInstance* filter)
+	{
+		filters.push_back(filter);
+	}
+	
 	bool	stopped;
 	bool	decayed;
 	

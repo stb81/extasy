@@ -310,6 +310,7 @@ public:
 	}
 };
 
+typedef Noise LFNoise;
 
 }
 
