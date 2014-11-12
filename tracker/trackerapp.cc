@@ -834,10 +834,8 @@ void TrackerApp::handle_event(SDL_Event& event)
 		}
 		
 		for (int i=0;i<blksize;i++) {
-			reinterpret_cast<short*>(blk->data)[2*i  ]=lrint(32767*data[0][i]);
-			reinterpret_cast<short*>(blk->data)[2*i+1]=lrint(32767*data[1][i]);
-			//reinterpret_cast<short*>(blk->data)[2*i  ]=lrint(32767*cbrtf(tanhf(cube(data[0][i]))));
-			//reinterpret_cast<short*>(blk->data)[2*i+1]=lrint(32767*cbrtf(tanhf(cube(data[1][i]))));
+			reinterpret_cast<short*>(blk->data)[2*i  ]=lrint(32767*clamp(data[0][i], -1.0f, 1.0f));
+			reinterpret_cast<short*>(blk->data)[2*i+1]=lrint(32767*clamp(data[1][i], -1.0f, 1.0f));
 		}
 		
 		if (spectrum_analyzer)
