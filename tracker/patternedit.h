@@ -32,8 +32,6 @@ public:
 	void set_module(Synth::Module*);
 	void set_pattern(Synth::Pattern*);
 	
-	void set_highlight_row(int);
-	
 	void set_instrument(int);
 	void set_modulation(float);
 	

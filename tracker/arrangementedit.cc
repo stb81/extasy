@@ -64,12 +64,15 @@ class PatternListRow<Module::arrangement_item_t>:public Group {
 	
 	PatternListBlock*			blocks[16];
 	
+	int							highlight_row=-1;
+	
 public:
 	bool isnew=false;
 	
 	PatternListRow(Module::arrangement_item_t&);
 	
 	virtual void draw();
+	virtual void handle_event(SDL_Event&);
 	
 	Pattern* get_pattern()
 	{
@@ -88,12 +91,15 @@ class PatternListRow<Pattern*>:public Group {
 	
 	PatternListBlock*			blocks[16];
 	
+	int							highlight_row=-1;
+	
 public:
 	bool isnew=false;
 	
 	PatternListRow(Pattern*);
 	
 	virtual void draw();
+	virtual void handle_event(SDL_Event&);
 	
 	Pattern* get_pattern()
 	{
@@ -355,12 +361,31 @@ void PatternListRow<Module::arrangement_item_t>::draw()
 	glVertex2i(x0, y0+height);
 	glEnd();
 	
+	if (highlight_row>=0) {
+		glBegin(GL_LINES);
+		glColor3f(0.5f, 1, 1);
+		glVertex2i(x0, y0+highlight_row+8);
+		glVertex2i(x0+width, y0+highlight_row+8);
+		glEnd();
+	}
+	
 	FontSpec font;
 	
 	font.font=thin_font;
 	textprint(x0+28, y0-8, font, item.pattern->get_name());
 
 	Group::draw();
+}
+
+
+void PatternListRow<Module::arrangement_item_t>::handle_event(SDL_Event& event)
+{
+	Group::handle_event(event);
+	
+	if (event.type==SDL_PLAY_POSITION_NOTIFICATION) {
+		auto ai=reinterpret_cast<Module::arrangement_item_t*>(event.user.data2);
+		highlight_row=ai==&item ? event.user.code : -1;
+	}
 }
 
 
@@ -383,6 +408,14 @@ void PatternListRow<Pattern*>::draw()
 	glVertex2i(x0, y0+height);
 	glEnd();
 	
+	if (highlight_row>=0) {
+		glBegin(GL_LINES);
+		glColor3f(0.5f, 1, 1);
+		glVertex2i(x0, y0+highlight_row+8);
+		glVertex2i(x0+width, y0+highlight_row+8);
+		glEnd();
+	}
+	
 	FontSpec font;
 	
 	font.font=thin_font;
@@ -392,6 +425,17 @@ void PatternListRow<Pattern*>::draw()
 	textprintf(x0+8, y0-8, font, "%02X", pattern->get_index());
 
 	Group::draw();
+}
+
+
+void PatternListRow<Pattern*>::handle_event(SDL_Event& event)
+{
+	Group::handle_event(event);
+	
+	if (event.type==SDL_PLAY_POSITION_NOTIFICATION) {
+		auto ai=reinterpret_cast<Module::arrangement_item_t*>(event.user.data2);
+		highlight_row=(ai && pattern==*ai) ? event.user.code : -1;
+	}
 }
 
 

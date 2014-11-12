@@ -214,7 +214,7 @@ struct Module {
 		Pattern*	pattern;
 		uint32_t	channelmask;
 		
-		operator Pattern*()
+		operator Pattern*() const
 		{
 			return pattern;
 		}

@@ -211,14 +211,16 @@ Sequencer::~Sequencer()
 void Sequencer::set_module(const Module* m)
 {
 	module=m;
+	
+	reset_position();
 }
 
 void Sequencer::process_row()
 {
-	int i;
+	Pattern& pattern=*get_current_pattern();
 
-	for (i=0;i<16;i++) {
-		const Pattern::Note& note=(*module->patterns[0])(i, cur_row);
+	for (int i=0;i<16;i++) {
+		const Pattern::Note& note=pattern(i, cur_row);
 		
 		if (note.flags&1)
 			mixer.stop_all_tones_on_channel(i);
@@ -240,12 +242,18 @@ void Sequencer::process_row()
 	}
 	
 	cur_row++;
-	cur_row&=63;
+	
+	if (cur_row==64) {
+		cur_row=0;
+		if (++cur_position==module->arrangement.end())
+			cur_position=module->arrangement.begin();
+	}
 }
 
 void Sequencer::reset_position()
 {
 	cur_row=0;
+	cur_position=module->arrangement.begin();
 }
 
 }

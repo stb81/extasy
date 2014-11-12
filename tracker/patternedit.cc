@@ -65,11 +65,6 @@ void PatternEdit::set_pattern(Pattern* pat)
 	pattern=pat;
 }
 
-void PatternEdit::set_highlight_row(int row)
-{
-	highlight_row=row;
-}
-
 void PatternEdit::set_instrument(int instr)
 {
 	current_instrument=instr;
@@ -440,6 +435,11 @@ void PatternEdit::handle_event(SDL_Event& ev)
 			scrollposx=std::min(std::max(scrollposx-ev.motion.xrel, 0), 16*120+32-width);
 			scrollposy=std::min(std::max(scrollposy-ev.motion.yrel, 0), 1024+16-height);
 		}
+	}
+	
+	if (ev.type==SDL_PLAY_POSITION_NOTIFICATION) {
+		auto ai=reinterpret_cast<Module::arrangement_item_t*>(ev.user.data2);
+		highlight_row=(ai && pattern==*ai) ? ev.user.code : -1;
 	}
 }
 

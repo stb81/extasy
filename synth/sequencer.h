@@ -148,11 +148,22 @@ public:
 		return cur_row;
 	}
 	
+	Pattern* get_current_pattern() const
+	{
+		return *cur_position;
+	}
+	
+	const Module::arrangement_item_t* get_current_arrangement_item() const
+	{
+		return &*cur_position;
+	}
+	
 private:
 	Mixer&		mixer;
 	const Module*	module;
 	
 	int		cur_row;
+	std::list<Module::arrangement_item_t>::const_iterator	cur_position;
 };
 
 }

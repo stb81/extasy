@@ -815,11 +815,11 @@ void TrackerApp::handle_event(SDL_Event& event)
 		while (ptr<blksize) {
 			if (!tick_samples) {
 				if (play) {
-					pattern_edit->set_highlight_row(sequencer->get_current_row());
+					send_notification(SDL_PLAY_POSITION_NOTIFICATION, (void*) sequencer->get_current_arrangement_item(), sequencer->get_current_row());
 					sequencer->process_row();
 				}
 				else
-					pattern_edit->set_highlight_row(-1);
+					send_notification(SDL_PLAY_POSITION_NOTIFICATION, nullptr, -1);
 					
 				tick_samples=mixer->get_samplerate() * 15 / bpm_box->get_value();
 			}
