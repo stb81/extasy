@@ -93,7 +93,7 @@ void ExcitationModelTone::compute_excitation(float* energy_buffer, int num)
 }
 
 
-Mixer::Mixer():final_highpass_filter(BiQuad::dcstop(0.998f)),highpass_l(final_highpass_filter),highpass_r(final_highpass_filter)
+Mixer::Mixer():final_highpass_filter(BiQuad::dcstop(0.998f)),highpass_l(final_highpass_filter),highpass_r(final_highpass_filter),rng(rand())
 {
 	numchannels=2;
 	samplerate=48000;

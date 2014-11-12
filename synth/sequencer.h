@@ -120,6 +120,11 @@ public:
 		return freq2omega(Instrument::note2freq(note));
 	}
 	
+	float randf()
+	{
+		return ldexpf(rng()>>40, -24);
+	}
+	
 private:
 	int			numchannels;
 	int			samplerate;
@@ -127,6 +132,8 @@ private:
 	float		master_volume;
 	
 	std::list<Tone*>	tones;
+	
+	xorshift64	rng;
 	
 	BiQuad			final_highpass_filter;
 	BiQuad::Filter		highpass_l;

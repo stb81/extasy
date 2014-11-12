@@ -268,19 +268,41 @@ private:
 };
 
 
+class xorshift64 {
+	uint64_t	state;
+	
+public:
+	xorshift64(uint64_t init):state(init) {}
+	
+	uint64_t operator()()
+	{
+		state^=state>>12;
+		state^=state<<25;
+		state^=state>>27;
+		return state*2685821657736338717ULL;
+	}
+};
+
+
 class Noise {
+	xorshift64	rnd;
+	
 	float	coeffs[4];
 	
 	float	pos;
 	float	freq;
 	
 public:
+	Noise():rnd(rand())
+	{
+	}
+	
 	void init(float f)
 	{
-		coeffs[0]=ldexpf(rand()&0xffff, -16);
-		coeffs[1]=ldexpf(rand()&0xffff, -16);
-		coeffs[2]=ldexpf(rand()&0xffff, -16);
-		coeffs[3]=ldexpf(rand()&0xffff, -16);
+		coeffs[0]=ldexpf(rnd()>>40, -24);
+		coeffs[1]=ldexpf(rnd()>>40, -24);
+		coeffs[2]=ldexpf(rnd()>>40, -24);
+		coeffs[3]=ldexpf(rnd()>>40, -24);
 		
 		pos=0;
 		freq=f;
@@ -303,7 +325,7 @@ public:
 			coeffs[0]=coeffs[1];
 			coeffs[1]=coeffs[2];
 			coeffs[2]=coeffs[3];
-			coeffs[3]=ldexpf(rand()&0xffff, -16);
+			coeffs[3]=ldexpf(rnd()>>40, -24);
 		}
 		
 		return result;

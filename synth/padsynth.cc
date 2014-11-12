@@ -187,7 +187,7 @@ void PadSynth::do_deserialize(Deserializer& deser)
 void PadSynth::create_random_timbre()
 {
 	for (int i=1;i<=256;i++)
-		band_coefficients[i-1]=-log(ldexpf((rand()&0xffff)+1, -16)) * (1+cosf(ldexpf(rand()&0xffff,-16)*M_PI)) / pow(1+i*i, exponent);
+		band_coefficients[i-1]=-logf(mixer.randf()) * (1+cosf(mixer.randf()*M_PI)) / pow(1+i*i, exponent);
 		
 	build_pad();
 }
@@ -195,6 +195,8 @@ void PadSynth::create_random_timbre()
 void PadSynth::build_pad()
 {
 	mixer.kill_all_tones_with_instrument(this);
+	
+	xorshift64 rnd(rand());	// FIXME: should use a fixed random seed for exact reproducability
 	
 	double* tmp=new double[length];
 	
@@ -211,9 +213,9 @@ void PadSynth::build_pad()
 			if (freq<1 || 2*freq>=length) continue;
 			
 			double amp=bw * j / i;
-			amp=exp(-amp*amp) / i / sqrt(length) * band_coefficients[i-1] * sqrtf(-logf(ldexpf((rand()&0xffff)+1, -16)));
+			amp=exp(-amp*amp) / i / sqrt(length) * band_coefficients[i-1] * sqrt(-log(ldexp((rnd()>>12)+1, -52)));
 
-			double phase=ldexpf(rand()&0xffff, -15) * M_PI;
+			double phase=ldexp(rnd()>>11, -52) * M_PI;
 			tmp[freq]+=amp * cos(phase);
 			tmp[length-freq]+=amp * sin(phase);
 		}
@@ -268,7 +270,7 @@ PadSynth::Tone::Tone(const PadSynth& ps, float freq, int vol):ExcitationModelTon
 	samples=pad.samples[0];
 	
 	for (int i=0;i<2;i++) {
-		pos[i]=ldexpf(rand()&0xfffff, -2);
+		pos[i]=pad.mixer.randf() * pad.length;
 		smooth[i]=SmoothStep(M_PI*stepsize/256, (*samples)(pos[i]), ((*samples)(pos[i]+1)-(*samples)(pos[i]-1))/2*stepsize );
 	}
 	
