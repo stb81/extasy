@@ -135,8 +135,17 @@ void Knob::draw()
 	
 	glPopMatrix();
 	
+	float val=get_value();
+	int prec=digits;
+	if (val>1) prec--;
+	if (val>10) prec--;
+	if (val>100) prec--;
+	if (val>1000) prec--;
+	if (val>10000) prec--;
+	if (prec<0) prec=0;
+	
 	fontspec.font=thin_font;
-	textprintf(originx+width/2, originy+width+16, fontspec, "%.*f", digits, get_value());
+	textprintf(originx+width/2, originy+width+16, fontspec, "%.*f", prec, val);
 	
 	if (edit_widget)
 		edit_widget->draw();
