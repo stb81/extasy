@@ -175,6 +175,14 @@ public:
 		return BiQuad(1, -2*cosf(omega), 1, 1+alpha, -2*cosf(omega), 1-alpha);
 	}
 	
+	static BiQuad resonance(float omega, float Q)
+	{
+		float alpha=sinf(omega) / (2*Q);
+		float beta=cosf(omega);
+		
+		return BiQuad(2-2*beta, 0, 0, 1+alpha, -2*beta, 1-alpha);
+	}
+	
 	static BiQuad peakingEQ(float omega, float Q, float gain)
 	{
 		float alpha=sinf(omega) / (2*Q);

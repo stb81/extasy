@@ -34,7 +34,7 @@ class FormantEditor:public GUI::Window {
 	SpinBox*	order_spinner;
 	
 	RadioButtonGroup	rbgtype;
-	RadioButton*	rbtypes[8];
+	RadioButton*	rbtypes[9];
 	
 	class ResponseCurve:public CurveView::Curve {
 	public:

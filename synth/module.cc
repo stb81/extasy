@@ -236,6 +236,9 @@ void Instrument::Resonance::init_filter(const Mixer& mixer)
 	case ALLPASS:
 		filter=BiQuad::allpass(omega, Q);
 		break;
+	case RESONANCE:
+		filter=BiQuad::resonance(omega, Q);
+		break;
 	}
 }
 

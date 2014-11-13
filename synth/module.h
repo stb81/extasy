@@ -164,7 +164,8 @@ private:
 			BANDPASS,
 			LOWPASS,
 			HIGHPASS,
-			ALLPASS
+			ALLPASS,
+			RESONANCE
 		};
 		
 		type_t	type;

@@ -52,7 +52,7 @@ float FormantEditor::ResponseCurve::evaluate(float x) const
 
 void FormantEditor::FormantColumn::draw(int x0, int y0, int row, bool highlight) const
 {
-	static const char* typecodes[]={ "EQ", "LS", "HS", "BS", "BP", "LP", "HP", "AP" };
+	static const char* typecodes[]={ "EQ", "LS", "HS", "BS", "BP", "LP", "HP", "AP", "RE" };
 	
 	float c=highlight ? 1.0f : 0.7f;
 	
@@ -144,9 +144,9 @@ FormantEditor::FormantEditor(Instrument* instr):Window(256, 0, 1056, 1040)
 	group_delay->add_curve(rc3);
 	add(group_delay);
 	
-	static const char* typenames[]={ "Peaking EQ", "Low Shelf", "High Shelf", "Band Stop", "Band Pass", "Low Pass", "High Pass", "All Pass" };
-	for (int i=0;i<8;i++) {
-		rbtypes[i]=new RadioButton(768, 28+i*24, 240, 16, typenames[i], rbgtype);
+	static const char* typenames[]={ "Peaking EQ", "Low Shelf", "High Shelf", "Band Stop", "Band Pass", "Low Pass", "High Pass", "All Pass", "Resonance" };
+	for (int i=0;i<9;i++) {
+		rbtypes[i]=new RadioButton(768, 8+i*24, 240, 16, typenames[i], rbgtype);
 		rbtypes[i]->clicked.connect(sigc::bind(sigc::mem_fun(this, &FormantEditor::type_changed), i));
 		add(rbtypes[i]);
 	}
@@ -165,6 +165,8 @@ void FormantEditor::add_formant()
 
 	formant_list->set_entry_count(instrument->resonance.size());
 	formant_list->set_selection(instrument->resonance.size()-1);
+	
+	update_knobs();
 }
 
 void FormantEditor::remove_formant()
