@@ -21,9 +21,6 @@
 using namespace GUI;
 using Synth::Instrument;
 
-#include "formantedit.h"
-
-
 namespace Synth {
 
 form KickDrum::Editor extends Window() extends InstrumentEditor<KickDrum, KickDrum::Editor>(KickDrum* kd) {
@@ -31,61 +28,51 @@ form KickDrum::Editor extends Window() extends InstrumentEditor<KickDrum, KickDr
 	
 	vbox {
 		hbox {
-			element Label {
-				size: 192, 24;
-				set text="Fundamental Frequency";
-			}
-			
 			element Knob {
-				size: 32, 32;
+				size: 32, 64;
+				
+				set label="Freq.";
 				
 				set range=10.0f, 200.0f, Knob::LOGARITHMIC;
 				bind: instrument->basefreq;
 			}
 			
 			element Knob {
-				size: 32, 32;
+				size: 32, 64;
+				
+				set label="Exp.";
+				set digits=2;
 				
 				set range=0.1f, 0.9f;
 				bind: instrument->tpower;
 			}
 			
 			element Knob {
-				size: 32, 32;
+				size: 32, 64;
+				
+				set label="C.Decay";
 				
 				set range=0.5f, 10.0f;
 				bind: instrument->carrier_decay;
 			}
 			
 			element Knob {
-				size: 32, 32;
+				size: 32, 64;
+				
+				set label="M.Decay";
 				
 				set range=0.5f, 10.0f;
 				bind: instrument->modulator_decay;
 			}
 		}
 	
-		hbox {
-			element Button {
-				size: 96, 24;
-				
-				set label="Formants";
-				
-				on clicked() {
-					auto wnd=new FormantEditor(instrument);
-					auto root=get_root_window();
-					root->add(wnd);
-					root->bring_to_front(wnd);					
-				}
-			}
+		element Button {
+			size: 96, 24;
+			halign: center;
 			
-			element Button {
-				size: 96, 24;
-				
-				set label="Close";
-				
-				on clicked=>close();
-			}
+			set label="Close";
+			
+			on clicked=>close();
 		}
 	}
 }
