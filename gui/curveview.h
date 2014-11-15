@@ -49,10 +49,24 @@ public:
 		virtual float evaluate(float) const =0;
 	};
 	
+	template<typename Fn>
+	class TCurve:public Curve {
+		Fn	fn;
+		
+		virtual float evaluate(float x) const
+		{
+			return fn(x);
+		}
+		
+	public:
+		TCurve(Fn fn):fn(fn) {}
+	};
+	
 	CurveView();
 	CurveView(int, int, int, int);
 	
 	virtual void draw();
+	virtual void handle_event(SDL_Event&);
 	
 	void set_description(const char* desc)
 	{
@@ -64,10 +78,40 @@ public:
 		curves.push_back(c);
 	}
 	
+	template<typename Fn>
+	void add_curve(Fn fn, Color color)
+	{
+		Curve* curve=new TCurve<Fn>(fn);
+		curve->set_color(color);
+		add_curve(curve);
+	}
+	
+	void add_vertical_line(float pos, Color color, int id=-1, const char* label=nullptr);
+	void remove_vertical_line(int id);
+	
+	void set_vertical_line_position(int id, float pos);
+	void set_vertical_line_color(int id, Color color);
+	void set_vertical_line_label(int id, const char* label);
+	
+	int get_selected_vertical_line() const;
+	
+	sigc::signal<void, int, float> vertical_line_dragged;
+	
 private:
-	const char*	description;
+	struct vline_t {
+		float		position;
+		Color		color;
+		int			id;
+		std::string	label;
+	};
+	
+	const char*				description;
 
-	std::vector<Curve*>	curves;
+	std::vector<Curve*>		curves;
+	std::vector<vline_t>	vlines;
+	
+	vline_t*				vline_highlight=nullptr;
+	bool					vline_dragging=false;
 };
 
 }
