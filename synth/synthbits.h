@@ -342,6 +342,92 @@ public:
 
 typedef Noise LFNoise;
 
+class Resample {
+	float	pos=0.0f;
+	float	step;
+	
+	float	buffer[7];
+	float	bufferd[2];
+	
+public:
+	Resample() {}
+	
+	Resample(float step):step(step)
+	{
+		buffer[0]=buffer[1]=buffer[2]=buffer[3]=buffer[4]=buffer[5]=buffer[6]=0.0f;
+		bufferd[0]=bufferd[1]=0.0f;
+	}
+	
+	float operator*()
+	{
+		float v=lerp(buffer[2], buffer[3], pos*pos*(3.0f-2.0f*pos));
+		v+=bufferd[0] * pos * (pos-1.0f) * (pos-1.0f);
+		v+=bufferd[1] * pos * pos * (pos-1.0f);
+		pos+=step;
+		return v;
+	}
+	
+	void operator()(float v)
+	{
+		pos-=1.0f;
+		buffer[0]=buffer[1];
+		buffer[1]=buffer[2];
+		buffer[2]=buffer[3];
+		buffer[3]=buffer[4];
+		buffer[4]=buffer[5];
+		buffer[5]=buffer[6];
+		buffer[6]=v;
+		bufferd[0]=bufferd[1];
+		bufferd[1]=(buffer[6]-9*buffer[5]+45*buffer[4]-45*buffer[2]+9*buffer[1]-buffer[0]) / 60;
+	}
+	
+	bool operator!() const
+	{
+		return pos>=1.0f;
+	}
+};
+
+class IntegralCombFilter {
+	float*	buffer=nullptr;
+	int		ptr=0;
+	int		length=0;
+	
+	float	alpha;
+	float	beta;
+	
+public:
+	~IntegralCombFilter()
+	{
+		delete[] buffer;
+	}
+	
+	void init(int l, float a, float b)
+	{
+		length=l;
+		buffer=new float[length];
+		
+		alpha=a;
+		beta=b;
+		
+		for (int i=0;i<length;i++)
+			buffer[i]=0;
+	}
+	
+	float operator()(float u)
+	{
+		float v=buffer[ptr];
+		
+		u-=v*beta;
+		v*=alpha;
+		v+=u;
+		
+		buffer[ptr]=u;
+		if (++ptr==length) ptr=0;
+
+		return v;
+	}
+};
+
 }
 
 #endif

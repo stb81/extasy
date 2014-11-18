@@ -18,6 +18,7 @@
 #include "synthbits.h"
 #include "module.h"
 #include "sequencer.h"
+#include "filter.h"
 #include "pwmsynth.h"
 #include "serialization.h"
 
@@ -31,11 +32,6 @@ public:
 	virtual void synth(float**, int);
 	
 private:
-	BiQuad	highpass;
-	BiQuad	lowpass;
-	BiQuad::Filter	highpass_filter[2];
-	BiQuad::Filter	lowpass_filter[2];
-	
 	float	timestep;
 	float	volume;
 	float	energy;
@@ -45,6 +41,9 @@ private:
 	
 	float	modpos[3];
 	float	modstep[3];
+	
+	Resample	resample[2];
+	IntegralCombFilter	comb[2];
 };
 
 
@@ -81,25 +80,32 @@ Synth::Tone* PWMSynth::play_note(int note, int volume)
 
 PWMSynth::Tone::Tone(const PWMSynth& pwm, int note, int vol):Synth::Tone(pwm)
 {
-	timestep=2.5f / pwm.mixer.get_samplerate() / 4;
+	timestep=2.5f / pwm.mixer.get_samplerate();
 	volume=ldexpf(vol, -8);
 	energy=0;
 	
-	highpass=BiQuad::highpass(pwm.mixer.note2omega(note)*0.125f, 4.0f);
-	lowpass=BiQuad::lowpass(M_PI*0.225f, 1.0f);
+	float freq=Instrument::note2freq(note);
+	int period=(int) floorf(pwm.mixer.get_samplerate() / freq);
+	float rate=period * freq;
+	printf("rate=%f\n", rate);
 	
 	for (int i=0;i<2;i++) {
 		ramppos[i]=0;
-		rampstep[i]=Instrument::note2freq(note) / pwm.mixer.get_samplerate() / 4;
+		rampstep[i]=freq / rate;
 	
 		modpos[i]=0;
 		modstep[i]=rampstep[i] * 0.01f;
-	
-		highpass_filter[i]=BiQuad::Filter(highpass);
-		lowpass_filter[i]=BiQuad::Filter(lowpass);
 	}
 	
 	modpos[1]=1.0f;
+	
+	resample[0]=Resample(rate/pwm.mixer.get_samplerate());
+	resample[1]=Resample(rate/pwm.mixer.get_samplerate());
+	
+	comb[0].init(period, 1.0f, -0.9f);
+	comb[1].init(period, 1.0f, -0.9f);
+	
+	add_filter(new CustomBiQuadFilterInstance(BiQuad::highpass(freq*2*M_PI/pwm.mixer.get_samplerate(), 1.0f)));
 }
 
 PWMSynth::Tone::~Tone()
@@ -108,28 +114,29 @@ PWMSynth::Tone::~Tone()
 
 void PWMSynth::Tone::synth(float** samples, int count)
 {
-	for (int i=0;i<count*4;i++) {
+	for (int i=0;i<count;i++) {
 		if (!stopped)
 			energy+=volume * timestep;
 			
 		energy-=energy * timestep;
 		
 		for (int j=0;j<2;j++) {
-			float v;
+
+			while (!resample[j]) {
+				float thres=(modpos[j]>1.0f ? 2.0f-modpos[j] : modpos[j]) * 0.9f + 0.05f;
+				//float thres=sinf(modpos[j]*M_PI)*0.45f + 0.5f;
 			
-			float thres=(modpos[j]>1.0f ? 2.0f-modpos[j] : modpos[j]) * 0.9f + 0.05f;
-			//float thres=sinf(modpos[j]*M_PI)*0.45f + 0.5f;
+				//resample[j](sinf(ramppos[j]*2.0f*M_PI));
+				resample[j](comb[j](ramppos[j] < thres ? -1.0f : 1.0f));
+			
+				ramppos[j]+=rampstep[j];
+				if (ramppos[j]>=1.0f) ramppos[j]-=1.0f;
+			
+				modpos[j]+=modstep[j];
+				if (modpos[j]>=2.0f) modpos[j]-=2.0f;
+			}
 		
-			v=lowpass_filter[j](highpass_filter[j](ramppos[j] < thres ? -1.0f : 1.0f));
-		
-			ramppos[j]+=rampstep[j];
-			if (ramppos[j]>=1.0f) ramppos[j]-=1.0f;
-		
-			modpos[j]+=modstep[j];
-			if (modpos[j]>=2.0f) modpos[j]-=2.0f;
-		
-			if (!(i&3))
-				samples[j][i>>2]=v * energy;
+			samples[j][i]=*resample[j] * energy;
 		}
 	}
 	

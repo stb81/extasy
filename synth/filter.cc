@@ -68,6 +68,11 @@ void BiQuadFilterInstance::apply(float** samples, int count)
 }
 
 
+CustomBiQuadFilterInstance::CustomBiQuadFilterInstance(const BiQuad& biquad):filter(biquad), BiQuadFilterInstance(filter)
+{
+}
+
+
 ChorusInstance::ChorusInstance(float depth, int numvoices):delayl((int) ceilf(depth)), delayr((int) ceilf(depth)), depth(depth), numvoices(numvoices)
 {
 	noise=new LFNoise[numvoices*2];

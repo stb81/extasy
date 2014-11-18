@@ -49,6 +49,14 @@ public:
 };
 
 
+class CustomBiQuadFilterInstance:public BiQuadFilterInstance {
+	BiQuad			filter;
+	
+public:
+	CustomBiQuadFilterInstance(const BiQuad&);
+};
+
+
 class ChorusInstance:public IFilterInstance {
 	VarDelay	delayl;
 	VarDelay	delayr;

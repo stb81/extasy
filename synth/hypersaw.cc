@@ -19,6 +19,7 @@
 #include "synthbits.h"
 #include "module.h"
 #include "sequencer.h"
+#include "filter.h"
 #include "hypersaw.h"
 
 namespace Synth {
@@ -84,6 +85,9 @@ HyperSaw::Tone::Tone(const HyperSaw& hs, int note, int vol):Synth::Tone(hs)
 	
 	excitation=ldexpf(vol, -7);
 	potential=2*excitation;
+	
+	add_filter(new CustomBiQuadFilterInstance(BiQuad::highpass(ss*3.0f*M_PI, 1.5f)));
+	add_filter(new CustomBiQuadFilterInstance(BiQuad::highpass(ss*3.0f*M_PI, 1.5f)));
 }
 
 HyperSaw::Tone::~Tone()
