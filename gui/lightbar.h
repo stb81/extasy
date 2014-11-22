@@ -14,22 +14,31 @@
  *   You should have received a copy of the GNU General Public License
  *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
  
-#ifndef INCLUDE_GUI_GUI_H
-#define INCLUDE_GUI_GUI_H
+#ifndef INCLUDE_GUI_LIGHTBAR_H
+#define INCLUDE_GUI_LIGHTBAR_H
 
-#include "basics.h"
-#include "widget.h"
-#include "window.h"
-#include "button.h"
-#include "lineedit.h"
-#include "textedit.h"
-#include "listbox.h"
-#include "spinbox.h"
-#include "hpaned.h"
-#include "knob.h"
-#include "curveview.h"
-#include "colorlabelchooser.h"
-#include "lightbar.h"
-#include "mainwindow.h"
+namespace GUI {
+	
+class LightBar:public Widget {
+public:
+	LightBar();
+	
+	void set_value(float v)
+	{
+		value=v;
+	}
+	
+	virtual void draw();
+	virtual void handle_event(SDL_Event&);
+	
+private:
+	float	value=1.0;
+	
+	Color	color_scheme[4];
+	
+	static int	shader;
+};
+	
+}
 
 #endif

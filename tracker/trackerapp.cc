@@ -352,13 +352,11 @@ void SpectrumAnalyzer::draw()
 	glUseProgram(0);
 }
 
-class PeakAnalyzer:public Widget {
+class PeakAnalyzer:public LightBar {
 public:
 	PeakAnalyzer(int, int, int, int);
 	virtual ~PeakAnalyzer();
 
-	virtual void draw();
-	
 	void feed(float*, int);
 	
 private:
@@ -366,40 +364,17 @@ private:
 	int		ptr;
 };
 
-PeakAnalyzer::PeakAnalyzer(int x, int y, int w, int h):Widget(x, y, w, h)
+PeakAnalyzer::PeakAnalyzer(int x, int y, int w, int h)
 {
+	set_origin(x, y);
+	set_size(w, h);
+	
 	peaks[0]=peaks[1]=peaks[2]=peaks[3]=0;
 	ptr=0;
 }
 
 PeakAnalyzer::~PeakAnalyzer()
 {
-}
-
-void PeakAnalyzer::draw()
-{
-	glUseProgram(0);
-	
-	float peak=std::max(peaks[0], std::max(peaks[1], std::max(peaks[2], peaks[3])));
-	
-	glBegin(GL_LINES);
-	for (int i=0;i<width;i+=2) {
-		float level=powf(2.0f, 8.0f*i/width-7.0f);
-		if (level > peak) break;
-		
-		if (level<0.125f)
-			glColor3f(0, 0.5f, 1);
-		else if (level<0.5f)
-			glColor3f(0, 1, 0);
-		else if (level<1.0f)
-			glColor3f(1, 1, 0);
-		else
-			glColor3f(1, 0, 0);
-		
-		glVertex2i(originx+i, originy);
-		glVertex2i(originx+i, originy+height-1);
-	}
-	glEnd();
 }
 
 void PeakAnalyzer::feed(float* data, int count)
@@ -410,6 +385,8 @@ void PeakAnalyzer::feed(float* data, int count)
 		
 	peaks[ptr++]=peak;
 	ptr&=3;
+	
+	set_value(log10f((peaks[0]+peaks[1]+peaks[2]+peaks[3])/4)*0.25f+1.0f);
 }
 
 void quit_clicked()
@@ -759,6 +736,14 @@ TrackerApp::TrackerApp()
 	but=new Button(400, 80, 128, 24, "Save Module");
 	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::save_module_clicked));
 	pane->add(but);
+
+	for (int i=0;i<6;i++) {
+		LightBar* lightbar=new LightBar;
+		lightbar->set_size(128, 16);
+		lightbar->set_origin(544, 12+i*16);
+		lightbar->set_value((i+3)*0.125);
+		pane->add(lightbar);
+	}
 	
 	spectrum_analyzer=nullptr;
 	arrangement_edit=nullptr;
