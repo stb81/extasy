@@ -45,8 +45,6 @@ PatternEdit::PatternEdit():canvas(256,64)
 	selectx=0;
 	selecty=0;
 	selection=false;
-	scrollposx=0;
-	scrollposy=0;
 	highlight_row=-1;
 	
 	modulation=255;
@@ -197,7 +195,7 @@ void PatternEdit::draw()
 	glEnd();
 
 	for (int i=0;i<16;i++)
-		textprintf(originx+32+i*120-scrollposx, originy, 1, 1, 1, "Channel %d", i+1);
+		textprintf(originx+32+i*120, originy, 1, 1, 1, "Channel %d", i+1);
 	
 	{
 		Scissor scissor(originx, originy+16, width, height-16);
@@ -206,15 +204,15 @@ void PatternEdit::draw()
 			glUseProgram(0);
 			glColor3f(0, 0, 0.5f);
 			glBegin(GL_QUADS);
-			glVertex2i(originx      , originy+highlight_row*16-scrollposy+16);
-			glVertex2i(originx+width, originy+highlight_row*16-scrollposy+16);
-			glVertex2i(originx+width, originy+highlight_row*16-scrollposy+32);
-			glVertex2i(originx      , originy+highlight_row*16-scrollposy+32);
+			glVertex2i(originx      , originy+highlight_row*16+16);
+			glVertex2i(originx+width, originy+highlight_row*16+16);
+			glVertex2i(originx+width, originy+highlight_row*16+32);
+			glVertex2i(originx      , originy+highlight_row*16+32);
 			glEnd();
 		}
 		
 		glEnable(GL_BLEND);
-		canvas.draw(originx-scrollposx, originy+16-scrollposy);
+		canvas.draw(originx, originy+16);
 		glDisable(GL_BLEND);
 	}
 }
@@ -241,19 +239,19 @@ void PatternEdit::handle_event(SDL_Event& ev)
 			selection=false;
 			cursory++;
 			cursory&=63;
-			if (16*cursory<scrollposy)
+			/*if (16*cursory<scrollposy)
 				scrollposy=16*cursory;
 			if (16*(cursory+2) > scrollposy+height)
-				scrollposy=16*(cursory+2)-height;
+				scrollposy=16*(cursory+2)-height;*/
 			break;
 		case SDLK_UP:
 			selection=false;
 			cursory--;
 			cursory&=63;
-			if (16*cursory<scrollposy)
+			/*if (16*cursory<scrollposy)
 				scrollposy=16*cursory;
 			if (16*(cursory+2) > scrollposy+height)
-				scrollposy=16*(cursory+2)-height;
+				scrollposy=16*(cursory+2)-height;*/
 			break;
 		case SDLK_DELETE:
 		case SDLK_BACKSPACE:
@@ -391,8 +389,8 @@ void PatternEdit::handle_event(SDL_Event& ev)
 	
 	if (has_mouse_focus()) {
 		if (ev.type==SDL_MOUSEBUTTONDOWN && ev.button.button==SDL_BUTTON_LEFT) {
-			int x=(ev.button.x-originx+scrollposx) / 8 - 3;
-			int y=(ev.button.y-originy+scrollposy) / 16 - 1;
+			int x=(ev.button.x-originx) / 8 - 3;
+			int y=(ev.button.y-originy) / 16 - 1;
 			
 			if (x>=0 && x<240 && y>=0 && cursor_index[x%15]>=0) {
 				cursorx=cursor_index[x%15] + (x/15)*8;
@@ -404,21 +402,9 @@ void PatternEdit::handle_event(SDL_Event& ev)
 			selecty=cursory;
 		}
 	
-		if (ev.type==SDL_MOUSEBUTTONDOWN && ev.button.button==SDL_BUTTON_WHEELDOWN) {
-			scrollposy+=16;
-			if (scrollposy>1040-height)
-				scrollposy=1040-height;
-		}
-	
-		if (ev.type==SDL_MOUSEBUTTONDOWN && ev.button.button==SDL_BUTTON_WHEELUP) {
-			scrollposy-=16;
-			if (scrollposy<0)
-				scrollposy=0;
-		}
-		
 		if (ev.type==SDL_MOUSEMOTION && (ev.motion.state&SDL_BUTTON(SDL_BUTTON_LEFT))) {
-			int x=(ev.button.x-originx+scrollposx) / 8 - 3;
-			int y=(ev.button.y-originy+scrollposy) / 16 - 1;
+			int x=(ev.button.x-originx) / 8 - 3;
+			int y=(ev.button.y-originy) / 16 - 1;
 			
 			if (x>=0 && x<240 && y>=0 && cursor_index[x%15]>=0) {
 				x=cursor_index[x%15] + (x/15)*8;
@@ -430,13 +416,8 @@ void PatternEdit::handle_event(SDL_Event& ev)
 				}
 			}
 		}
-		
-		if (ev.type==SDL_MOUSEMOTION && (ev.motion.state&SDL_BUTTON(SDL_BUTTON_RIGHT))) {
-			scrollposx=std::min(std::max(scrollposx-ev.motion.xrel, 0), 16*120+32-width);
-			scrollposy=std::min(std::max(scrollposy-ev.motion.yrel, 0), 1024+16-height);
-		}
 	}
-	
+		
 	if (ev.type==SDL_PLAY_POSITION_NOTIFICATION) {
 		auto ai=reinterpret_cast<Module::arrangement_item_t*>(ev.user.data2);
 		highlight_row=(ai && pattern==*ai) ? ev.user.code : -1;

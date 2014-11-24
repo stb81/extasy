@@ -646,10 +646,15 @@ TrackerApp::TrackerApp()
 	play=false;
 	tick_samples=0;
 	
+	ScrollPane* pattern_edit_pane=new ScrollPane(true, true);
+	pattern_edit_pane->set_size(get_width(), get_height()-128);
+	pattern_edit_pane->set_origin(0, 128);
+	add(pattern_edit_pane);
+	
 	pattern_edit=new PatternEdit;
 	pattern_edit->set_origin(0, 128);
-	pattern_edit->set_size(get_width(), get_height()-128);
-	add(pattern_edit);
+	pattern_edit->set_size((16*15+4)*8, 65*16);
+	pattern_edit_pane->add(pattern_edit);
 	
 	HPaned* paned=new HPaned(0, 0, get_width(), 128);
 	add(paned);

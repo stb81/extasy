@@ -14,23 +14,39 @@
  *   You should have received a copy of the GNU General Public License
  *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
  
-#ifndef INCLUDE_GUI_GUI_H
-#define INCLUDE_GUI_GUI_H
+#ifndef INCLUDE_GUI_SCROLLPANE_H
+#define INCLUDE_GUI_SCROLLPANE_H
 
-#include "basics.h"
-#include "widget.h"
-#include "window.h"
-#include "button.h"
-#include "lineedit.h"
-#include "textedit.h"
-#include "listbox.h"
-#include "spinbox.h"
-#include "scrollpane.h"
-#include "hpaned.h"
-#include "knob.h"
-#include "curveview.h"
-#include "colorlabelchooser.h"
-#include "lightbar.h"
-#include "mainwindow.h"
+namespace GUI {
+
+class ScrollPane:public Container {
+public:
+	ScrollPane(bool, bool);
+	virtual ~ScrollPane();
+	
+	virtual void draw();
+	virtual void handle_event(SDL_Event&);
+	
+	virtual void add(Widget*);
+	virtual void remove(Widget*);
+	
+	virtual bool is_child_in_front(const Widget* w) const;
+	
+	void set_scroll_position(int, int);
+	
+	sigc::signal<void, int, int> scroll_position_changed;
+	
+private:
+	bool	scrollh;
+	bool	scrollv;
+	bool	scrolling=false;
+	
+	int		scrollposx=0;
+	int		scrollposy=0;
+	
+	Widget*	child=nullptr;
+};
+
+}
 
 #endif

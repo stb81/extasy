@@ -55,9 +55,6 @@ private:
 	int		selecty;
 	bool	selection;
 	
-	int		scrollposx;
-	int		scrollposy;
-	
 	int		highlight_row;
 	
 	int		modulation;
