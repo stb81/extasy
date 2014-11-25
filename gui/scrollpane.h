@@ -29,6 +29,8 @@ public:
 	
 	virtual void add(Widget*);
 	virtual void remove(Widget*);
+
+	virtual void set_size(int, int);
 	
 	virtual bool is_child_in_front(const Widget* w) const;
 	

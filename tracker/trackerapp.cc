@@ -594,7 +594,9 @@ void PatternNameColumn::accept_edit(LineEdit* ed, int row)
 }
 
 class TrackerApp:public MainWindow {
-	PatternEdit* pattern_edit;
+	ScrollPane*		pattern_edit_pane;
+	PatternEdit*	pattern_edit;
+	
 	ListBox* pattern_list;
 	
 	ListBox* instrument_list;
@@ -646,7 +648,7 @@ TrackerApp::TrackerApp()
 	play=false;
 	tick_samples=0;
 	
-	ScrollPane* pattern_edit_pane=new ScrollPane(true, true);
+	pattern_edit_pane=new ScrollPane(true, true);
 	pattern_edit_pane->set_size(get_width(), get_height()-128);
 	pattern_edit_pane->set_origin(0, 128);
 	add(pattern_edit_pane);
@@ -973,7 +975,7 @@ void TrackerApp::toggle_spectrum_analyzer()
 		delete spectrum_analyzer;
 		spectrum_analyzer=nullptr;
 		
-		pattern_edit->set_size(get_width(), get_height()-128);
+		pattern_edit_pane->set_size(get_width(), get_height()-128);
 	}
 	else {
 		spectrum_analyzer=new SpectrumAnalyzer(get_width(), 256);
@@ -981,7 +983,7 @@ void TrackerApp::toggle_spectrum_analyzer()
 		add(spectrum_analyzer);
 		bring_to_front(spectrum_analyzer);
 		
-		pattern_edit->set_size(get_width(), get_height()-384);
+		pattern_edit_pane->set_size(get_width(), get_height()-384);
 	}
 }
 

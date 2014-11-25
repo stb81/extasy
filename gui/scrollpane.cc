@@ -16,6 +16,8 @@ ScrollPane::~ScrollPane()
 
 void ScrollPane::set_scroll_position(int sx, int sy)
 {
+	if (!child) return;
+	
 	scrollposx=scrollh ? sx : 0;
 	scrollposy=scrollv ? sy : 0;
 
@@ -25,6 +27,33 @@ void ScrollPane::set_scroll_position(int sx, int sy)
 	if (scrollposy<0) scrollposy=0;
 	
 	child->set_origin(originx-scrollposx, originy-scrollposy);
+}
+
+void ScrollPane::set_size(int w, int h)
+{
+	Widget::set_size(w, h);
+	
+	if (!child) return;
+
+	bool change=false;
+
+	if (scrollposx>child->get_width()-width) {
+		scrollposx=child->get_width()-width;
+		change=true;
+	}
+	
+	if (scrollposy>child->get_height()-height) {
+		scrollposy=child->get_height()-height;
+		change=true;
+	}
+	
+	if (change) {
+		if (scrollposx<0) scrollposx=0;
+		if (scrollposy<0) scrollposy=0;
+		
+		child->set_origin(originx-scrollposx, originy-scrollposy);
+		scroll_position_changed(scrollposx, scrollposy);
+	}
 }
 
 void ScrollPane::draw()
