@@ -19,24 +19,49 @@
 
 namespace GUI {
 	
-class LightBar:public Widget {
+class LightBarArray:public Widget {
 public:
-	LightBar();
+	enum orientation_t {
+		HORIZONTAL,
+		VERTICAL
+	};
 	
-	void set_value(float v)
+	LightBarArray(int count, orientation_t);
+	virtual ~LightBarArray();
+	
+	void set_value(int index, float value)
 	{
-		value=v;
+		values[index]=value;
 	}
 	
 	virtual void draw();
 	virtual void handle_event(SDL_Event&);
 	
+protected:
+	orientation_t	orientation;
+
 private:
-	float	value=1.0;
+	int				numvalues;
+	float*			values;
 	
-	Color	color_scheme[4];
+	int				focused=-1;
 	
-	static int	shader;
+	Color			color_scheme[4];
+	
+	static int		shader;
+};
+
+
+class LightBar:public LightBarArray {
+public:
+	LightBar();
+	
+	virtual void set_size(int, int);
+	
+	void set_value(float value)
+	{
+		LightBarArray::set_value(0, value);
+	}
 };
 	
 }

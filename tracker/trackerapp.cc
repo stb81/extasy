@@ -744,13 +744,12 @@ TrackerApp::TrackerApp()
 	but->clicked.connect(sigc::mem_fun(this, &TrackerApp::save_module_clicked));
 	pane->add(but);
 
-	for (int i=0;i<6;i++) {
-		LightBar* lightbar=new LightBar;
-		lightbar->set_size(128, 16);
-		lightbar->set_origin(544, 12+i*16);
-		lightbar->set_value((i+3)*0.125);
-		pane->add(lightbar);
-	}
+	LightBarArray* lightbar=new LightBarArray(6, LightBarArray::VERTICAL);
+	lightbar->set_size(128, 16*6);
+	lightbar->set_origin(544, 12);
+	pane->add(lightbar);
+	for (int i=0;i<6;i++)
+		lightbar->set_value(i, (i+3)*0.125);
 	
 	spectrum_analyzer=nullptr;
 	arrangement_edit=nullptr;

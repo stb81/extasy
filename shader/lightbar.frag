@@ -1,4 +1,5 @@
 uniform float display_value;
+uniform float length;
 uniform vec3 color_scheme[4];
 
 varying vec2 coord;
@@ -12,7 +13,7 @@ float border(float v)
 
 void main()
 {
-	float alpha=border(coord.x) * border(128.0-coord.x) * border(coord.y) * border(16.0-coord.y);
+	float alpha=border(coord.x) * border(length-coord.x) * border(coord.y) * border(16.0-coord.y);
 	alpha*=alpha*(3.0-2.0*alpha);
 	
 	float beta=border(coord.x) * border(display_value-coord.x) * border(coord.y) * border(16.0-coord.y);
@@ -20,7 +21,7 @@ void main()
 	beta=max((beta-0.5) * 2.0, 0.0);
 	beta*=beta;
 	
-	float lambda=coord.x/32.0;
+	float lambda=4.0*coord.x/length;
 	
 	vec3 color;
 	if (lambda<1)
