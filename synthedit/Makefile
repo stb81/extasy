@@ -2,7 +2,7 @@
 
 TARGET=libsynthedit.o
 FORMS=$(wildcard *.form)
-OBJS=synthedit.o formantedit.o padsynthedit.o $(addsuffix .o,$(FORMS))
+OBJS=synthedit.o formantedit.o $(addsuffix .o,$(FORMS))
 
 CFLAGS=-std=c++11 -O2 -march=core2 -ffast-math -I.. $(shell sdl-config --cflags) $(shell pkg-config sigc++-2.0 --cflags) $(shell pkg-config glew --cflags)
 
