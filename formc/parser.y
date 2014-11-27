@@ -317,6 +317,15 @@ LayoutItem:
 		delete $2;
 	  }
 	  ItemDefs '}' { $$=layout_stack.top(); layout_stack.pop(); layout_stack.top()->add_child($$); }
+	| ELEMENT TypeName '(' LongExprList ')' { scanner_end_cpp_expr(); } '{'
+	  {
+		LayoutElement* el=new LayoutElement;
+		el->element_type=strdup($2->c_str());
+		layout_stack.push(el);
+		cur_form->constructors.push_back(std::pair<LayoutElement*,std::string*>(el, $4));
+		delete $2;
+	  }
+	  ItemDefs '}' { $$=layout_stack.top(); layout_stack.pop(); layout_stack.top()->add_child($$); }
 	| HBOX '{'
 	  {
 		LayoutBox* box=new LayoutBox;

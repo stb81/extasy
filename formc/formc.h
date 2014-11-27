@@ -157,6 +157,7 @@ struct Form:LayoutElement {
 	};
 	
 	std::vector<std::pair<char*,arglist_t*> >	extensions;
+	std::vector<std::pair<LayoutElement*, std::string*> >	constructors;
 	std::vector<FormMethod*>					form_methods;
 	std::vector<char*>							subclasses;
 	

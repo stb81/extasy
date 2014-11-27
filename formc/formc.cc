@@ -380,7 +380,7 @@ void Form::print()
 		}		
 	}
 	
-	if (extensions.size()) {
+	if (extensions.size() || constructors.size()) {
 		fputs(") :\n", out_source);
 		
 		for (int i=0;i<extensions.size();i++) {
@@ -401,7 +401,14 @@ void Form::print()
 			}
 			
 			fputc(')', out_source);
-			if (i+1<extensions.size())
+			if (i+1<extensions.size() || constructors.size())
+				fputc(',', out_source);
+			fputc('\n', out_source);
+		}
+		
+		for (int i=0;i<constructors.size();i++) {
+			fprintf(out_source, "\t%s(%s)", constructors[i].first->varname, constructors[i].second->c_str());
+			if (i+1<constructors.size())
 				fputc(',', out_source);
 			fputc('\n', out_source);
 		}
