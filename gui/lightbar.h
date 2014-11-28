@@ -37,6 +37,8 @@ public:
 	virtual void draw();
 	virtual void handle_event(SDL_Event&);
 	
+	sigc::signal<void, int, float>	value_changed;
+	
 protected:
 	orientation_t	orientation;
 

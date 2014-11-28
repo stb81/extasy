@@ -45,8 +45,17 @@ void LightBarArray::handle_event(SDL_Event& event)
 		}
 	}
 	
-	if (event.type==SDL_MOUSEMOTION && (flags&MOUSE_DOWN) && focused>=0)
-		values[focused]=orientation==HORIZONTAL ? float(event.motion.x-originx+8)/width : float(height-event.motion.y+originy+8)/height;
+	if (event.type==SDL_MOUSEBUTTONDOWN && (flags&MOUSE_DOWN) && focused>=0) {
+		values[focused]=std::min(std::max(orientation==HORIZONTAL ? float(event.button.x-originx+8)/width : float(height-event.button.y+originy+8)/height, 0.0f), 1.0f);
+		
+		value_changed(focused, values[focused]);
+	}
+	
+	if (event.type==SDL_MOUSEMOTION && (flags&MOUSE_DOWN) && focused>=0) {
+		values[focused]=std::min(std::max(orientation==HORIZONTAL ? float(event.motion.x-originx+8)/width : float(height-event.motion.y+originy+8)/height, 0.0f), 1.0f);
+		
+		value_changed(focused, values[focused]);
+	}
 }
 
 void LightBarArray::draw()
