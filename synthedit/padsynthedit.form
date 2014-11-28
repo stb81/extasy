@@ -1,0 +1,168 @@
+/*   extasy - Extensible Tracker And Synthesizer
+ *   Copyright (C) 2014 Stefan T. Boettner
+ *
+ *   extasy is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   extasy is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with extasy.  If not, see <http://www.gnu.org/licenses/>. */
+ 
+#include <synth/synthbits.h>
+#include <synth/module.h>
+#include <synth/padsynth.h>
+#include <gui/gui.h>
+#include "synthedit.h"
+#include "excitationedit.form.h"
+
+using namespace GUI;
+
+namespace Synth {
+
+form PadSynth::Editor extends Window() extends InstrumentEditor<PadSynth, PadSynth::Editor>(PadSynth* ps) {
+	set title="Pad Synthesis";
+
+	vbox {
+		hbox {
+			vbox {
+				hbox {
+					element Knob {
+						size: 32, 64;
+						valign: center;
+						
+						name: knob_lowcut;
+						
+						set label="Low Cut";
+						set range=0.25f, 16.0f, Knob::LOGARITHMIC;
+
+						bind: instrument->lowcut;
+					}
+					
+					element Knob {
+						size: 32, 64;
+						valign: center;
+
+						name: knob_brightness;
+						
+						set label="Brightn.";
+						set range=0.5f, 4.0f, Knob::LOGARITHMIC;
+
+						bind: instrument->brightness;
+					}
+					
+					element Knob {
+						size: 32, 64;
+						valign: center;
+
+						name: knob_richness;
+						
+						set label="Richness";
+						set range=0.25f, 4.0f, Knob::LOGARITHMIC;
+
+						bind: instrument->richness;
+					}
+					
+					element Knob {
+						size: 32, 64;
+						valign: center;
+
+						name: knob_bandwidth;
+						
+						set label="Bandw.";
+						set range=0.25f, 4.0f, Knob::LOGARITHMIC;
+
+						bind: instrument->bandwidth;
+					}
+				}
+				
+				element Button {
+					size: 128, 24;
+					halign: center;
+					
+					set label="Apply";
+					
+					on clicked() {
+						instrument->build_pad();
+					}
+				}
+			}
+			
+			element CurveView {
+				size: 768, 128;
+				
+				init {
+					for (int i=1;i<=10;i++) {
+						char tmp[16];
+
+						sprintf(tmp, "%d. harmonic", i);
+						@.add_vertical_line(logf(i*2.0f)/logf(512.0f), Color(128, 192, 255, 128), i, tmp);
+						if (i==1) continue;
+
+						sprintf(tmp, "%d. harmonic", i*10);
+						@.add_vertical_line(logf(i*20.0f)/logf(512.0f), Color(128, 192, 255, 64), i*10, tmp);
+					}
+
+					@.add_vertical_line(logf(400.0f)/logf(512.0f), Color(128, 192, 255, 64), 200, "200. harmonic");
+				}
+				
+				curve_model(const PadSynth::Editor& theform=*this) {
+					color: 0, 255, 255;
+					
+					eval(x) {
+						float harmonic=powf(512.0f, x) * 0.5f;
+						
+						float lowcut=theform.knob_lowcut.get_value();
+						float brightness=theform.knob_brightness.get_value();
+
+						float v=harmonic*harmonic;
+
+						float gain=powf(1.0f+4.0f*lowcut*lowcut, 0.5f*brightness);
+
+						return logf(gain * v / powf(lowcut*lowcut + v, 1.0f + 0.5f*brightness)) * 0.25f + 1.0f;
+					}
+				}
+			}
+		}
+	
+		element LightBarArray(64, LightBarArray::VERTICAL) {
+			size: 1024, 128;
+			
+			init {
+				for (int i=0;i<64;i++)
+					@.set_value(i, instrument->band_coefficients[i]);
+			}
+			
+			on value_changed(int index, float value) {
+				instrument->band_coefficients[index]=value;
+			}
+		}
+	
+		hbox {
+			element Button {
+				size: 96, 24;
+				set label="Excitation";
+				
+				on clicked() {
+					ExcitationModelInstrument::Editor ee(instrument);
+					ee.run(get_root_window());
+				}
+			}
+			
+			element Button {
+				size: 96, 24;
+				set label="Close";
+				
+				on clicked=>close();
+			}
+		}
+	}
+}
+
+}
+

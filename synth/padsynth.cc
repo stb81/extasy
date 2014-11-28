@@ -132,8 +132,11 @@ PadSynth::Pad::~Pad()
 	delete[] samples;
 }
 
-PadSynth::PadSynth(Mixer& m, float exponent):ExcitationModelInstrument(m), exponent(exponent)
+PadSynth::PadSynth(Mixer& m, float exponent):ExcitationModelInstrument(m)
 {
+	lowcut=0.25f;
+	brightness=1.0f;
+	richness=1.0f;
 	bandwidth=0.25f;
 	
 	band_coefficients=new float[256];
@@ -158,7 +161,7 @@ void PadSynth::do_serialize(Serializer& ser) const
 	
 	Instrument::do_serialize(ser);
 	
-	ser << tag("exponent", exponent) << tag("bandwidth", bandwidth) << tag("length", length);
+	ser << tag("lowcut", lowcut) << tag("brightness", brightness) << tag("richness", richness) << tag("bandwidth", bandwidth) << tag("length", length);
 	
 	{
 		Serializer::Tag _tag(ser, "bands");
@@ -172,7 +175,7 @@ void PadSynth::do_deserialize(Deserializer& deser)
 {
 	Instrument::do_deserialize(deser);
 	
-	deser >> tag("exponent", exponent) >> tag("bandwidth", bandwidth) >> tag("length", length);
+	deser >> tag("lowcut", lowcut) >> tag("brightness", brightness) >> tag("richness", richness) >> tag("bandwidth", bandwidth) >> tag("length", length);
 	
 	{
 		Deserializer::Tag _tag(deser, "bands");
@@ -186,8 +189,10 @@ void PadSynth::do_deserialize(Deserializer& deser)
 
 void PadSynth::create_random_timbre()
 {
-	for (int i=1;i<=256;i++)
-		band_coefficients[i-1]=-logf(mixer.randf()) * (1+cosf(mixer.randf()*M_PI)) / pow(1+i*i, exponent);
+	xorshift64 rnd(rand());	// FIXME: use better seed
+	
+	for (int i=0;i<256;i++)
+		band_coefficients[i]=ldexpf(rnd()>>40, -24);
 		
 	build_pad();
 }
@@ -206,6 +211,8 @@ void PadSynth::build_pad()
 	for (int i=1;i<=256;i++) {
 		double bw=bandwidth;
 		
+		double bandamp=pow(band_coefficients[i-1], richness) * i * i / pow(lowcut*lowcut + i*i, 1.0+0.5*brightness) / sqrt(length);
+		
 		int bands=(int) ceil(i * 3 / bw);
 		
 		for (int j=-bands;j<=bands;j++) {
@@ -213,7 +220,7 @@ void PadSynth::build_pad()
 			if (freq<1 || 2*freq>=length) continue;
 			
 			double amp=bw * j / i;
-			amp=exp(-amp*amp) / i / sqrt(length) * band_coefficients[i-1] * sqrt(-log(ldexp((rnd()>>12)+1, -52)));
+			amp=exp(-amp*amp) * bandamp;// * sqrt(-log(ldexp((rnd()>>12)+1, -52)));
 
 			double phase=ldexp(rnd()>>11, -52) * M_PI;
 			tmp[freq]+=amp * cos(phase);

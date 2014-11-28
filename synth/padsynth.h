@@ -46,7 +46,9 @@ private:
 	int		length;
 	Pad*	samples[4];
 	
-	float	exponent;
+	float	lowcut;
+	float	brightness;
+	float	richness;
 	float	bandwidth;
 };
 
