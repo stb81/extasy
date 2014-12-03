@@ -42,14 +42,16 @@ private:
 	void	build_pad();
 	
 	float*	band_coefficients;
+	float*	spectrum;
 	
 	int		length;
-	Pad*	samples[4];
+	Pad*	samples[8];
 	
 	float	lowcut;
 	float	brightness;
 	float	richness;
 	float	bandwidth;
+	float	bwexponent;
 };
 
 }

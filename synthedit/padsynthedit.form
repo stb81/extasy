@@ -39,7 +39,7 @@ form PadSynth::Editor extends Window() extends InstrumentEditor<PadSynth, PadSyn
 						name: knob_lowcut;
 						
 						set label="Low Cut";
-						set range=0.25f, 16.0f, Knob::LOGARITHMIC;
+						set range=0.5f, 16.0f, Knob::LOGARITHMIC;
 
 						bind: instrument->lowcut;
 					}
@@ -75,9 +75,21 @@ form PadSynth::Editor extends Window() extends InstrumentEditor<PadSynth, PadSyn
 						name: knob_bandwidth;
 						
 						set label="Bandw.";
-						set range=0.25f, 4.0f, Knob::LOGARITHMIC;
+						set range=0.05f, 5.0f, Knob::LOGARITHMIC;
 
 						bind: instrument->bandwidth;
+					}
+					
+					element Knob {
+						size: 32, 64;
+						valign: center;
+
+						name: knob_bwexponent;
+						
+						set label="Bw.Exp.";
+						set range=0.0f, 1.0f, Knob::LINEAR;
+
+						bind: instrument->bwexponent;
 					}
 				}
 				
@@ -109,6 +121,18 @@ form PadSynth::Editor extends Window() extends InstrumentEditor<PadSynth, PadSyn
 					}
 
 					@.add_vertical_line(logf(400.0f)/logf(512.0f), Color(128, 192, 255, 64), 200, "200. harmonic");
+				}
+				
+				curve_model(const PadSynth* instrument=instrument) {
+					color: 170, 255, 85;
+					
+					eval(x) {
+						float freq=powf(512.0f, x) * 256;
+						
+						int f0=(int) floorf(freq);
+						
+						return instrument->spectrum[f0] * 0.25f+1.0f;
+					}
 				}
 				
 				curve_model(const PadSynth::Editor& theform=*this) {
