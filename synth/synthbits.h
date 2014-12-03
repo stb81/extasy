@@ -24,10 +24,20 @@
 
 namespace Synth {
 
+// linear interpolation
 template<typename TVector>
-TVector lerp(TVector v1, TVector v2, float lambda)
+TVector lerp(const TVector& v1, const TVector& v2, float lambda)
 {
 	return v1*(1.0f-lambda) + v2*lambda;
+}
+
+
+// Hermite interpolation
+template<typename TVector>
+TVector herp(const TVector& v1, const TVector& v2, const TVector& d1, const TVector& d2, float lambda)
+{
+	return lerp(v1, v2, lambda*lambda*(3.0f-2.0f*lambda)) +
+	       lerp(-d1, d2, lambda) * lambda * (lambda-1.0f);
 }
 
 
@@ -342,6 +352,39 @@ public:
 
 typedef Noise LFNoise;
 
+template<typename T>
+void shift(T& a) {}
+
+template<typename T, typename ...Args>
+void shift(T& a, T& b, Args&... args)
+{
+	a=b;
+	shift(b, args...);
+}
+
+template<int n, typename T>
+struct _shift_helper {
+	static void shift(T* buf, const T& v)
+	{
+		_shift_helper<n-1, T>::shift(buf, buf[n-1]);
+		buf[n-1]=v;
+	}
+};
+
+template<typename T>
+struct _shift_helper<1, T> {
+	static void shift(T* buf, const T& v)
+	{
+		*buf=v;
+	}
+};
+
+template<int n, typename T>
+void shift(T* buf, const T& v)
+{
+	_shift_helper<n, T>::shift(buf, v);
+}
+
 class Resample {
 	float	pos=0.0f;
 	float	step;
@@ -360,9 +403,7 @@ public:
 	
 	float operator*()
 	{
-		float v=lerp(buffer[2], buffer[3], pos*pos*(3.0f-2.0f*pos));
-		v+=bufferd[0] * pos * (pos-1.0f) * (pos-1.0f);
-		v+=bufferd[1] * pos * pos * (pos-1.0f);
+		float v=herp(buffer[2], buffer[3], bufferd[0], bufferd[1], pos);
 		pos+=step;
 		return v;
 	}
@@ -370,15 +411,8 @@ public:
 	void operator()(float v)
 	{
 		pos-=1.0f;
-		buffer[0]=buffer[1];
-		buffer[1]=buffer[2];
-		buffer[2]=buffer[3];
-		buffer[3]=buffer[4];
-		buffer[4]=buffer[5];
-		buffer[5]=buffer[6];
-		buffer[6]=v;
-		bufferd[0]=bufferd[1];
-		bufferd[1]=(buffer[6]-9*buffer[5]+45*buffer[4]-45*buffer[2]+9*buffer[1]-buffer[0]) / 60;
+		shift<7>(buffer, v);
+		shift<2>(bufferd, (buffer[6]-9*buffer[5]+45*buffer[4]-45*buffer[2]+9*buffer[1]-buffer[0]) / 60);
 	}
 	
 	bool operator!() const
@@ -394,6 +428,7 @@ class IntegralCombFilter {
 	
 	float	alpha;
 	float	beta;
+	float	gain;
 	
 public:
 	~IntegralCombFilter()
@@ -408,6 +443,7 @@ public:
 		
 		alpha=a;
 		beta=b;
+		gain=(1.0f+beta)/(1.0f+alpha);
 		
 		for (int i=0;i<length;i++)
 			buffer[i]=0;
@@ -424,7 +460,7 @@ public:
 		buffer[ptr]=u;
 		if (++ptr==length) ptr=0;
 
-		return v;
+		return v*gain;
 	}
 };
 
