@@ -70,12 +70,12 @@ void ScrollPane::handle_event(SDL_Event& event)
 	
 	Container::handle_event(event);
 
-	if (event.type==SDL_MOUSEBUTTONDOWN && event.button.button==SDL_BUTTON_WHEELDOWN && scrollv) {
+	if (event.type==SDL_MOUSEBUTTONDOWN && event.button.button==SDL_BUTTON_WHEELDOWN && scrollv && has_mouse_focus()) {
 		set_scroll_position(scrollposx, scrollposy+16);
 		scroll_position_changed(scrollposx, scrollposy);
 	}
 
-	if (event.type==SDL_MOUSEBUTTONDOWN && event.button.button==SDL_BUTTON_WHEELUP && scrollv) {
+	if (event.type==SDL_MOUSEBUTTONDOWN && event.button.button==SDL_BUTTON_WHEELUP && scrollv && has_mouse_focus()) {
 		set_scroll_position(scrollposx, scrollposy-16);
 		scroll_position_changed(scrollposx, scrollposy);
 	}
