@@ -80,6 +80,9 @@ private:
 	float	energy;
 	float	excitation_rate;
 	float	decay_rate;
+	int		attack_pos;
+	int		attack_count;
+	float	attack_scale;
 };
 
 

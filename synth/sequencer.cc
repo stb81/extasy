@@ -70,7 +70,15 @@ ExcitationModelTone::ExcitationModelTone(const ExcitationModelInstrument& instr,
 {
 	decay_rate=instr.decay_rate * powf(freq/440.0f, instr.decay_scale) / instr.mixer.get_samplerate();
 	excitation_rate=ldexpf(vol, -7) * instr.continuous_excitation * decay_rate;
-	energy=ldexpf(vol, -7) * instr.discrete_excitation;
+	
+	attack_count=attack_pos=lrintf(instr.attack_time*instr.mixer.get_samplerate()*0.001f);
+	if (attack_count) {
+		energy=0.0f;
+		attack_count++;
+		attack_scale=ldexpf(vol, -7) * instr.discrete_excitation * 6.0f / attack_count / (attack_count*attack_count-1);
+	}	
+	else
+		energy=ldexpf(vol, -7) * instr.discrete_excitation;
 }
 
 ExcitationModelTone::~ExcitationModelTone()
@@ -84,6 +92,11 @@ void ExcitationModelTone::compute_excitation(float* energy_buffer, int num)
 			energy+=excitation_rate;
 		
 		energy*=1.0f-decay_rate;
+		
+		if (attack_pos) {
+			energy+=attack_scale * attack_pos * (attack_count-attack_pos);
+			attack_pos--;
+		}
 		
 		*energy_buffer++=energy;
 	}

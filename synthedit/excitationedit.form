@@ -31,6 +31,15 @@ form ExcitationModelInstrument::Editor extends Dialog() extends Controller<Excit
 			element Knob {
 				size: 32, 64;
 
+				set label="Attack";
+				set range=0.0f, 100.0f;
+				
+				bind: model->attack_time;
+			}
+			
+			element Knob {
+				size: 32, 64;
+
 				set label="Discrete";
 				set range=0.0f, 1.0f;
 				

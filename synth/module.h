@@ -203,6 +203,7 @@ public:
 	virtual ~ExcitationModelInstrument();
 	
 protected:
+	float	attack_time;
 	float	discrete_excitation;
 	float	continuous_excitation;
 	float	decay_rate;

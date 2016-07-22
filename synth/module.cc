@@ -323,6 +323,7 @@ void Instrument::do_deserialize(Deserializer& deser)
 
 ExcitationModelInstrument::ExcitationModelInstrument(Mixer& m):Instrument(m)
 {
+	attack_time=0.0f;
 	discrete_excitation=1.0f;
 	continuous_excitation=0.5f;
 	decay_rate=4.0f;
